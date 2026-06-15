@@ -1,0 +1,13 @@
+{
+  "id": "gcc.type.reference-binding-temporary",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "cannot bind non-const lvalue reference .* to an rvalue",
+  "title": "Reference cannot bind rvalue",
+  "explanation": "A non-const lvalue reference is trying to bind to a temporary value.",
+  "quickFixes": [
+    "Change to const reference if read-only access is enough.",
+    "Store the temporary in a named variable first.",
+    "Review function parameter reference type requirements."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "clang.linker.undefined-reference",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "undefined reference to",
+  "title": "Undefined reference",
+  "explanation": "Linker found a declaration, but no compiled definition for the symbol.",
+  "quickFixes": [
+    "Add missing function or variable definition.",
+    "Compile and link all required source files.",
+    "Ensure linked libraries are included in build command."
+  ]
+}

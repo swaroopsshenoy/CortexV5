@@ -1,0 +1,236 @@
+[
+  {
+    "id": "opt.flatten-deep-nesting",
+    "title": "Flatten deeply nested branches",
+    "rationale": "High nesting raises branch complexity and hurts maintainability and performance tuning.",
+    "actions": [
+      "Introduce guard clauses to exit early.",
+      "Extract nested blocks into focused helper functions.",
+      "Merge related conditions where possible."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f3-keep-functions-short-and-simple"
+    ],
+    "priority": 9,
+    "baseConfidence": 0.58,
+    "maxConfidence": 0.96,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.nesting.maxDepth",
+        "operator": ">=",
+        "value": 4,
+        "weight": 0.2,
+        "hint": "Nesting depth crossed maintainability threshold."
+      },
+      {
+        "type": "smell_count",
+        "smellType": "deep_nesting",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.16,
+        "hint": "Code smell detector flagged deep nesting."
+      }
+    ]
+  },
+  {
+    "id": "opt.extract-long-function",
+    "title": "Split long function into smaller units",
+    "rationale": "Large functions reduce optimization locality and hide hot-path opportunities.",
+    "actions": [
+      "Extract independent regions into helper functions.",
+      "Isolate hot path from setup/cleanup code.",
+      "Keep each helper focused on one responsibility."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f2-a-function-should-perform-a-single-logical-operation"
+    ],
+    "priority": 8,
+    "baseConfidence": 0.55,
+    "maxConfidence": 0.95,
+    "conditions": [
+      {
+        "type": "smell_count",
+        "smellType": "long_function",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.24,
+        "hint": "Long function smell detected."
+      }
+    ]
+  },
+  {
+    "id": "opt.remove-copy-hotspots",
+    "title": "Reduce pass-by-value copy hotspots",
+    "rationale": "Unnecessary copies increase CPU and memory pressure on critical paths.",
+    "actions": [
+      "Switch heavy pass-by-value parameters to const references.",
+      "Use move semantics when ownership transfer is intended.",
+      "Profile copy-heavy call sites after change."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-consume"
+    ],
+    "priority": 10,
+    "baseConfidence": 0.62,
+    "maxConfidence": 0.98,
+    "conditions": [
+      {
+        "type": "semantic_count",
+        "checkType": "copy_hotspot",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.25,
+        "hint": "Copy hotspot semantic check matched."
+      }
+    ]
+  },
+  {
+    "id": "opt.remove-memory-risks",
+    "title": "Stabilize memory management paths",
+    "rationale": "Risky allocation patterns can block aggressive optimization and introduce leaks.",
+    "actions": [
+      "Balance allocation/deallocation paths.",
+      "Prefer RAII wrappers and smart pointers.",
+      "Replace unsafe C-string APIs with bounded alternatives."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii"
+    ],
+    "priority": 9,
+    "baseConfidence": 0.6,
+    "maxConfidence": 0.97,
+    "conditions": [
+      {
+        "type": "semantic_count",
+        "checkType": "memory_risk",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.22,
+        "hint": "Memory risk checks reported issues."
+      }
+    ]
+  },
+  {
+    "id": "opt-constantize-magic-numbers",
+    "title": "Replace magic numbers with named constants",
+    "rationale": "Named constants improve readability and help compiler optimizations reason about intent.",
+    "actions": [
+      "Introduce constexpr constants for repeated literals.",
+      "Group related constants into enums or structs.",
+      "Keep units and intent in constant names."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#es45-avoid-magic-constants-use-symbolic-constants"
+    ],
+    "priority": 6,
+    "baseConfidence": 0.5,
+    "maxConfidence": 0.9,
+    "conditions": [
+      {
+        "type": "smell_count",
+        "smellType": "magic_numbers",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.2,
+        "hint": "Magic number smell found."
+      }
+    ]
+  },
+  {
+    "id": "opt-deduplicate-code-blocks",
+    "title": "Extract duplicate blocks into shared logic",
+    "rationale": "Duplicate blocks multiply maintenance and optimization effort.",
+    "actions": [
+      "Extract duplicate blocks into one shared helper.",
+      "Parameterize variable behavior points.",
+      "Keep one canonical implementation path."
+    ],
+    "references": [
+      "https://refactoring.guru/smells/duplicate-code"
+    ],
+    "priority": 7,
+    "baseConfidence": 0.54,
+    "maxConfidence": 0.93,
+    "conditions": [
+      {
+        "type": "smell_count",
+        "smellType": "duplicate_blocks",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.21,
+        "hint": "Duplicate block smell detected."
+      }
+    ]
+  },
+  {
+    "id": "opt-clean-unused-work",
+    "title": "Remove dead and unused work",
+    "rationale": "Dead paths and unused values add noise and reduce optimizer effectiveness.",
+    "actions": [
+      "Delete unreachable statements after terminators.",
+      "Remove or intentionally annotate unused variables.",
+      "Re-run compile diagnostics after cleanup."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#es20-always-initialize-an-object"
+    ],
+    "priority": 8,
+    "baseConfidence": 0.57,
+    "maxConfidence": 0.95,
+    "conditions": [
+      {
+        "type": "semantic_count",
+        "checkType": "dead_code",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.18,
+        "required": false,
+        "hint": "Dead code findings present."
+      },
+      {
+        "type": "semantic_count",
+        "checkType": "unused_variable",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.2,
+        "required": false,
+        "hint": "Unused variable findings present."
+      }
+    ]
+  },
+  {
+    "id": "opt-modernize-stl-loops",
+    "title": "Modernize container loops with STL-friendly patterns",
+    "rationale": "Modern loop and STL patterns reduce overhead and enable better compiler optimizations.",
+    "actions": [
+      "Use range-based loops where indexing is not needed.",
+      "Prefer standard algorithms for common traversal patterns.",
+      "Pass containers by const reference when mutation is unnecessary."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#es2-prefer-suitable-abstractions-to-direct-use-of-language-features"
+    ],
+    "priority": 7,
+    "baseConfidence": 0.52,
+    "maxConfidence": 0.92,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.loops.for",
+        "operator": ">=",
+        "value": 2,
+        "weight": 0.15,
+        "hint": "Multiple index-based loops found."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.containerReferences",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.14,
+        "hint": "STL containers are used in current file."
+      }
+    ]
+  }
+]

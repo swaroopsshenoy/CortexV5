@@ -1,0 +1,13 @@
+{
+  "id": "clang.template.no-matching-member-function",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "no matching member function for call to",
+  "title": "Template member call mismatch",
+  "explanation": "A member function call on a templated type does not match any valid overload.",
+  "quickFixes": [
+    "Check method name and signature for the instantiated type.",
+    "Convert arguments to the expected method parameter types.",
+    "Inspect substituted template type to confirm available methods."
+  ]
+}

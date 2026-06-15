@@ -1,0 +1,39 @@
+{
+  "servers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/mcp-server-playwright"
+      ]
+    },
+    "shell": {
+      "command": "node",
+      "args": [
+        "mcp/custom-shell-server.py"
+      ],
+      "note": "Run via python in real host config."
+    },
+    "cmake": {
+      "command": "python",
+      "args": [
+        "mcp/custom-cmake-server.py"
+      ],
+      "note": "CMake-focused MCP wrapper."
+    },
+    "python-ml": {
+      "command": "python",
+      "args": [
+        "mcp/python-ml-server.py"
+      ],
+      "note": "Custom MCP endpoint for model inference and NLP explanation pipelines."
+    },
+    "search": {
+      "command": "python",
+      "args": [
+        "mcp/perplexity-search-server.py"
+      ],
+      "note": "Perplexity/search integration."
+    }
+  }
+}

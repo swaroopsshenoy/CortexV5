@@ -1,0 +1,12 @@
+{
+  "id": "gcc.syntax.expected-semicolon",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "expected\\s+';'",
+  "title": "Missing semicolon",
+  "explanation": "Statement ended without required semicolon token.",
+  "quickFixes": [
+    "Add ';' at end of previous statement.",
+    "Check line before error location for missing terminator."
+  ]
+}

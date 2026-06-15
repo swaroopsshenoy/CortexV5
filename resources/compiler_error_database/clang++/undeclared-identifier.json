@@ -1,0 +1,13 @@
+{
+  "id": "clang.name.undeclared-identifier",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "use of undeclared identifier",
+  "title": "Undeclared identifier",
+  "explanation": "Symbol used before declaration or outside visible scope.",
+  "quickFixes": [
+    "Declare variable/function before usage.",
+    "Fix spelling or include correct header.",
+    "Verify namespace qualification."
+  ]
+}

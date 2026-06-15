@@ -1,0 +1,13 @@
+{
+  "id": "clang.name.redefinition",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "redefinition of",
+  "title": "Symbol redefined",
+  "explanation": "The same variable, function, or type was defined more than once in a conflicting way.",
+  "quickFixes": [
+    "Keep only one definition for the same symbol in scope.",
+    "Move shared declarations to headers and definitions to source files.",
+    "Use include guards or #pragma once in headers."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "gcc.warning.unused-variable",
+  "compiler": "g++",
+  "type": "warning",
+  "messagePattern": "unused variable",
+  "title": "Unused variable",
+  "explanation": "Variable declared but not used.",
+  "quickFixes": [
+    "Remove unused variable.",
+    "Use variable value in logic.",
+    "Mark intentional unused values clearly."
+  ]
+}

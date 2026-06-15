@@ -1,0 +1,13 @@
+{
+  "id": "gcc.syntax.expected-closing-brace",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "expected '\\}'",
+  "title": "Missing closing brace",
+  "explanation": "A block started with '{' but was not closed with a matching '}'.",
+  "quickFixes": [
+    "Add a closing '}' for the open block.",
+    "Check function and loop blocks near the error line.",
+    "Use editor brace matching to find missing brace."
+  ]
+}

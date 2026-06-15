@@ -1,0 +1,13 @@
+{
+  "id": "clang.syntax.expected-closing-brace",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "expected\\s+'\\}'",
+  "title": "Missing closing brace",
+  "explanation": "A code block was opened but not closed with a matching '}'.",
+  "quickFixes": [
+    "Add a closing '}' for the block before this line.",
+    "Check recent if/for/while/function blocks for missing braces.",
+    "Use editor brace matching to find the unmatched '{'."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "gcc.template.no-type-named",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "no type named .* in",
+  "title": "Template nested type missing",
+  "explanation": "Template code expects a nested type that the provided type does not define.",
+  "quickFixes": [
+    "Verify nested type spelling and availability.",
+    "Use a compatible type with required nested members.",
+    "Add constraints/static checks for template requirements."
+  ]
+}

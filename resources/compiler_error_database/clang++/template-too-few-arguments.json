@@ -1,0 +1,13 @@
+{
+  "id": "clang.template.too-few-arguments",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "too few template arguments",
+  "title": "Missing template arguments",
+  "explanation": "A template type or function was used without enough template parameters.",
+  "quickFixes": [
+    "Provide all required template arguments.",
+    "Use class template argument deduction when supported.",
+    "Check the template declaration for required parameters."
+  ]
+}

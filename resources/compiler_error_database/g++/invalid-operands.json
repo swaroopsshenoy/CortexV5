@@ -1,0 +1,13 @@
+{
+  "id": "gcc.type.invalid-operands",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "invalid operands to binary expression|invalid operands of types",
+  "title": "Invalid operator operands",
+  "explanation": "The operator is used with types that do not support this operation together.",
+  "quickFixes": [
+    "Convert operands to compatible types first.",
+    "Use a different operator suitable for these types.",
+    "Check custom operator overload availability."
+  ]
+}

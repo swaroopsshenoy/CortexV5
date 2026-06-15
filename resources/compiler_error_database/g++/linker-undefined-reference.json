@@ -1,0 +1,13 @@
+{
+  "id": "gcc.linker.undefined-reference",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "undefined reference to",
+  "title": "Linker cannot find definition",
+  "explanation": "A symbol is declared and used, but its compiled definition is missing during link.",
+  "quickFixes": [
+    "Add the missing function/variable definition.",
+    "Include all source files in the compile and link step.",
+    "Link required external libraries in build command."
+  ]
+}

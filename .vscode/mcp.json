@@ -1,0 +1,38 @@
+﻿{
+    "mcpServers":  {
+                       "playwright":  {
+                                          "args":  [
+                                                       "-y",
+                                                       "@microsoft/mcp-server-playwright"
+                                                   ],
+                                          "command":  "npx"
+                                      },
+                       "cortex-python-ml":  {
+                                                "args":  [
+                                                             "C:\\college\\s8\\Project\\MyProject\\Cortex++V5\\mcp\\python-ml-server.py"
+                                                         ],
+                                                "command":  "python"
+                                            },
+                       "cortex-perplexity-search":  {
+                                                        "args":  [
+                                                                     "C:\\college\\s8\\Project\\MyProject\\Cortex++V5\\mcp\\perplexity-search-server.py"
+                                                                 ],
+                                                        "env":  {
+                                                                    "PPLX_API_KEY":  "\u003cSET_IN_ENV\u003e"
+                                                                },
+                                                        "command":  "python"
+                                                    },
+                       "cortex-shell":  {
+                                            "args":  [
+                                                         "C:\\college\\s8\\Project\\MyProject\\Cortex++V5\\mcp\\custom-shell-server.py"
+                                                     ],
+                                            "command":  "python"
+                                        },
+                       "cortex-cmake":  {
+                                            "args":  [
+                                                         "C:\\college\\s8\\Project\\MyProject\\Cortex++V5\\mcp\\custom-cmake-server.py"
+                                                     ],
+                                            "command":  "python"
+                                        }
+                   }
+}

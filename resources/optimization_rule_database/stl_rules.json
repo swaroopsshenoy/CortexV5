@@ -1,0 +1,182 @@
+[
+  {
+    "id": "opt.stl.range-loop-modernization",
+    "category": "stl",
+    "stlSignalWeight": 0.09,
+    "title": "Modernize index loops to range-based loops",
+    "rationale": "Range-based loops reduce index overhead and improve readability for container traversal.",
+    "actions": [
+      "Replace index-based loops with range-based for loops when index is not required.",
+      "Use const auto& for read-only iteration over heavy STL values.",
+      "Keep index loops only when direct index arithmetic is needed."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#es71-prefer-a-range-for-statement-to-a-for-statement-when-there-is-a-choice"
+    ],
+    "priority": 8,
+    "baseConfidence": 0.54,
+    "maxConfidence": 0.96,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.loops.for",
+        "operator": ">=",
+        "value": 2,
+        "weight": 0.15,
+        "hint": "Multiple classic for-loops detected."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.containerReferences",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.16,
+        "hint": "STL containers are used in current file."
+      }
+    ]
+  },
+  {
+    "id": "opt.stl.pass-by-const-reference",
+    "category": "stl",
+    "stlSignalWeight": 0.1,
+    "title": "Prefer const references for heavy STL parameters",
+    "rationale": "Passing STL containers by value can trigger avoidable copies on hot paths.",
+    "actions": [
+      "Change read-only STL parameters to const references.",
+      "Use move semantics for ownership transfer instead of pass-by-value.",
+      "Measure copy reduction in call-heavy paths."
+    ],
+    "references": [
+      "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-in"
+    ],
+    "priority": 9,
+    "baseConfidence": 0.58,
+    "maxConfidence": 0.97,
+    "conditions": [
+      {
+        "type": "semantic_count",
+        "checkType": "copy_hotspot",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.2,
+        "hint": "Copy hotspot check reported pass-by-value overhead."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.containerReferences",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.14,
+        "hint": "STL containers appear in this file."
+      }
+    ]
+  },
+  {
+    "id": "opt.stl.reserve-capacity",
+    "category": "stl",
+    "stlSignalWeight": 0.08,
+    "title": "Reserve STL container capacity before growth",
+    "rationale": "Pre-reserving capacity reduces reallocations during repeated insertions.",
+    "actions": [
+      "Call reserve() before repeated push_back/emplace operations when size estimate is known.",
+      "Use resize() when full size is deterministic.",
+      "Avoid repeated incremental reallocation in loops."
+    ],
+    "references": [
+      "https://en.cppreference.com/w/cpp/container/vector/reserve"
+    ],
+    "priority": 8,
+    "baseConfidence": 0.52,
+    "maxConfidence": 0.94,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.containerReferences",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.13,
+        "hint": "STL containers detected."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.loops.total",
+        "operator": ">=",
+        "value": 2,
+        "weight": 0.12,
+        "hint": "Loop activity suggests repeated insertions."
+      }
+    ]
+  },
+  {
+    "id": "opt.stl.use-standard-algorithms",
+    "category": "stl",
+    "stlSignalWeight": 0.09,
+    "title": "Replace manual loops with STL algorithms",
+    "rationale": "Standard algorithms are expressive and can unlock better optimization opportunities.",
+    "actions": [
+      "Use std::transform/std::for_each/std::count for traversal patterns.",
+      "Use std::find/std::any_of for search predicates.",
+      "Use std::sort/std::stable_sort for ordering operations."
+    ],
+    "references": [
+      "https://en.cppreference.com/w/cpp/algorithm"
+    ],
+    "priority": 7,
+    "baseConfidence": 0.51,
+    "maxConfidence": 0.92,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.loops.for",
+        "operator": ">=",
+        "value": 2,
+        "weight": 0.14,
+        "hint": "Manual loop density is high."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.algorithmCalls",
+        "operator": "<=",
+        "value": 1,
+        "weight": 0.13,
+        "hint": "Few STL algorithm calls found."
+      }
+    ]
+  },
+  {
+    "id": "opt.stl.iterator-safe-traversal",
+    "category": "stl",
+    "stlSignalWeight": 0.08,
+    "title": "Strengthen iterator-safe traversal patterns",
+    "rationale": "Iterator invalidation risks can lead to subtle bugs and missed optimizations.",
+    "actions": [
+      "Avoid mutating containers while iterating unless iterator stability is guaranteed.",
+      "Prefer erase-remove idiom for filtered removals.",
+      "Revalidate iterators after operations that may invalidate them."
+    ],
+    "references": [
+      "https://en.cppreference.com/w/cpp/container"
+    ],
+    "priority": 7,
+    "baseConfidence": 0.5,
+    "maxConfidence": 0.9,
+    "conditions": [
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.stl.iteratorUsage",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.14,
+        "hint": "Iterator usage detected."
+      },
+      {
+        "type": "metric_threshold",
+        "metricPath": "features.loops.total",
+        "operator": ">=",
+        "value": 1,
+        "weight": 0.1,
+        "hint": "Loop traversal and iterator usage overlap."
+      }
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/mcp-server-playwright"
+      ]
+    },
+    "cortex-shell": {
+      "command": "python",
+      "args": [
+        "${workspaceFolder}\\mcp\\custom-shell-server.py"
+      ]
+    },
+    "cortex-cmake": {
+      "command": "python",
+      "args": [
+        "${workspaceFolder}\\mcp\\custom-cmake-server.py"
+      ]
+    },
+    "cortex-python-ml": {
+      "command": "python",
+      "args": [
+        "${workspaceFolder}\\mcp\\python-ml-server.py"
+      ]
+    },
+    "cortex-perplexity-search": {
+      "command": "python",
+      "args": [
+        "${workspaceFolder}\\mcp\\perplexity-search-server.py"
+      ],
+      "env": {
+        "PPLX_API_KEY": "${env:PPLX_API_KEY}"
+      }
+    }
+  }
+}

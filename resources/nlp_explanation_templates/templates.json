@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "nlp.performance.risk_high",
+      "domain": "performance_risk",
+      "priority": 100,
+      "when": {
+        "performanceRisk.status": "ok",
+        "performanceRisk.riskClass": "risk_high"
+      },
+      "title": "High performance risk",
+      "summary": "The model estimates {{probabilityPercent}} confidence for class {{riskClass}}.",
+      "explanation": "Your code shows patterns that often correlate with slower runtime behavior. Key signals: {{topCauseSummary}}. Estimated complexity is {{timeBigO}} time and {{spaceBigO}} space.",
+      "actions": [
+        "Profile hot loops and reduce nesting depth.",
+        "Prefer references and reserve STL capacity where possible.",
+        "Re-run benchmark after each optimization."
+      ]
+    },
+    {
+      "id": "nlp.performance.risk_medium",
+      "domain": "performance_risk",
+      "priority": 90,
+      "when": {
+        "performanceRisk.status": "ok",
+        "performanceRisk.riskClass": "risk_medium"
+      },
+      "title": "Moderate performance risk",
+      "summary": "Performance risk is {{riskClass}} with {{probabilityPercent}} model confidence.",
+      "explanation": "Some structural signals may affect scalability: {{topCauseSummary}}. Current complexity estimate: {{timeBigO}} time, {{spaceBigO}} space.",
+      "actions": [
+        "Inspect loops and allocation patterns in the hottest functions.",
+        "Apply one optimization suggestion and compare benchmark deltas."
+      ]
+    },
+    {
+      "id": "nlp.performance.risk_low",
+      "domain": "performance_risk",
+      "priority": 80,
+      "when": {
+        "performanceRisk.status": "ok",
+        "performanceRisk.riskClass": "risk_low"
+      },
+      "title": "Low performance risk",
+      "summary": "Current structure looks comparatively efficient ({{probabilityPercent}} confidence).",
+      "explanation": "No dominant high-risk feature spikes were detected. Complexity estimate remains {{timeBigO}} time and {{spaceBigO}} space.",
+      "actions": [
+        "Keep measuring with benchmarks as code evolves."
+      ]
+    },
+    {
+      "id": "nlp.complexity.quadratic",
+      "domain": "complexity",
+      "priority": 70,
+      "when": {
+        "complexity.time.bigO": "O(n^2)"
+      },
+      "title": "Quadratic time complexity",
+      "summary": "Nested or repeated iteration suggests {{timeBigO}} time behavior.",
+      "explanation": "With {{loopTotal}} loop constructs and nesting depth {{nestingDepth}}, runtime can grow quickly on larger inputs.",
+      "actions": [
+        "Look for inner loops that can be reduced or replaced with hash/map lookups.",
+        "Consider algorithm substitution from optimization suggestions."
+      ]
+    },
+    {
+      "id": "nlp.semantic.memory_risk",
+      "domain": "semantic",
+      "priority": 60,
+      "when": {
+        "semantic.memoryRiskCount.min": 1
+      },
+      "title": "Memory safety signals",
+      "summary": "{{semanticMemoryRiskCount}} memory-risk semantic check(s) were found.",
+      "explanation": "Allocation and deallocation patterns may be unbalanced or unsafe. Review new/delete and malloc/free pairings.",
+      "actions": [
+        "Match each allocation with a clear release path.",
+        "Prefer RAII containers over raw owning pointers."
+      ]
+    },
+    {
+      "id": "nlp.optimization.available",
+      "domain": "optimization",
+      "priority": 50,
+      "when": {
+        "optimization.count.min": 1
+      },
+      "title": "Optimization opportunities",
+      "summary": "{{optimizationCount}} optimization suggestion(s) are available.",
+      "explanation": "Top recommendation: {{topOptimizationTitle}}. Rationale: {{topOptimizationRationale}}",
+      "actions": [
+        "Start with the highest-confidence suggestion.",
+        "Use refactor preview before applying manual edits."
+      ]
+    }
+  ]
+}

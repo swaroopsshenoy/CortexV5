@@ -1,0 +1,13 @@
+{
+  "id": "gcc.linker.multiple-definition",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "multiple definition of",
+  "title": "Duplicate linker symbol",
+  "explanation": "More than one object file defines the same symbol.",
+  "quickFixes": [
+    "Keep one definition and remove duplicates.",
+    "Move global definitions out of headers.",
+    "Use inline for header-only definitions when appropriate."
+  ]
+}

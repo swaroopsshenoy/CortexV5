@@ -1,0 +1,13 @@
+{
+  "id": "clang.warning.unused-variable",
+  "compiler": "clang++",
+  "type": "warning",
+  "messagePattern": "unused variable",
+  "title": "Unused variable",
+  "explanation": "Variable declared but not read.",
+  "quickFixes": [
+    "Remove variable if unnecessary.",
+    "Use variable in logic.",
+    "Prefix with [[maybe_unused]] for intentional placeholder."
+  ]
+}

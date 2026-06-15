@@ -1,0 +1,13 @@
+{
+  "id": "gcc.name.not-declared",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "was not declared in this scope",
+  "title": "Name not declared",
+  "explanation": "Symbol is missing declaration in current scope.",
+  "quickFixes": [
+    "Declare symbol before usage.",
+    "Fix typo in name.",
+    "Include header declaring symbol."
+  ]
+}

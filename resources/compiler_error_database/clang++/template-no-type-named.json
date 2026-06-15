@@ -1,0 +1,13 @@
+{
+  "id": "clang.template.no-type-named",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "no type named .* in",
+  "title": "Template type member missing",
+  "explanation": "Template code expects a nested type that does not exist on the provided type.",
+  "quickFixes": [
+    "Verify the expected nested type name is correct.",
+    "Pass a type that provides the required nested type.",
+    "Use type traits or concepts to guard unsupported types."
+  ]
+}

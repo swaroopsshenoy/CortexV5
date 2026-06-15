@@ -1,0 +1,13 @@
+{
+  "id": "clang.syntax.expected-expression",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "expected expression",
+  "title": "Incomplete expression",
+  "explanation": "The compiler expected a value or expression but found invalid or missing code.",
+  "quickFixes": [
+    "Complete the statement with a valid expression.",
+    "Remove extra commas, operators, or stray symbols.",
+    "Check the token right before the error location."
+  ]
+}

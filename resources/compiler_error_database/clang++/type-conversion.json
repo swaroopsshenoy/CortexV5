@@ -1,0 +1,13 @@
+{
+  "id": "clang.type.invalid-conversion",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "cannot initialize|no viable conversion|invalid operands",
+  "title": "Type mismatch",
+  "explanation": "Operands or assignment types are incompatible.",
+  "quickFixes": [
+    "Match variable and expression types.",
+    "Add explicit cast only when safe.",
+    "Check function parameter types."
+  ]
+}

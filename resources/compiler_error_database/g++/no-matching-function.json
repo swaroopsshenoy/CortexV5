@@ -1,0 +1,13 @@
+{
+  "id": "gcc.type.no-matching-function",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "no matching function for call to",
+  "title": "Function call does not match",
+  "explanation": "No function overload matches the argument types or count used in this call.",
+  "quickFixes": [
+    "Check the called function signature.",
+    "Fix argument count, order, or types.",
+    "Add an overload that accepts these arguments."
+  ]
+}

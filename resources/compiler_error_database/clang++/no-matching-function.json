@@ -1,0 +1,13 @@
+{
+  "id": "clang.type.no-matching-function",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "no matching function for call to",
+  "title": "No matching function",
+  "explanation": "No available function overload matches the argument count or argument types used in the call.",
+  "quickFixes": [
+    "Check function name spelling and namespace.",
+    "Pass arguments with the expected types and order.",
+    "Add or adjust an overload that matches this call."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "gcc.type.invalid-conversion",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "invalid conversion|cannot convert|no match for",
+  "title": "Type mismatch",
+  "explanation": "Types or function signatures do not align.",
+  "quickFixes": [
+    "Align argument and parameter types.",
+    "Use explicit cast only when safe.",
+    "Adjust overload or template arguments."
+  ]
+}

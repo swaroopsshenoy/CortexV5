@@ -1,0 +1,13 @@
+{
+  "id": "clang.type.reference-binding-temporary",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "non-const lvalue reference to type .* cannot bind to a temporary",
+  "title": "Reference bound to temporary",
+  "explanation": "A non-const lvalue reference cannot attach to a temporary value.",
+  "quickFixes": [
+    "Change parameter type to const reference if mutation is not needed.",
+    "Store temporary value in a named variable before passing.",
+    "Use move/reference semantics only when valid for the API."
+  ]
+}

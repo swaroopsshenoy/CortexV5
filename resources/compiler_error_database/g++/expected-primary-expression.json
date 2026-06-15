@@ -1,0 +1,13 @@
+{
+  "id": "gcc.syntax.expected-primary-expression",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "expected primary-expression",
+  "title": "Expected value or expression",
+  "explanation": "Compiler expected a valid expression but encountered missing or malformed code.",
+  "quickFixes": [
+    "Complete the expression at the reported location.",
+    "Check for extra operators or missing operands.",
+    "Review the previous token for syntax mistakes."
+  ]
+}

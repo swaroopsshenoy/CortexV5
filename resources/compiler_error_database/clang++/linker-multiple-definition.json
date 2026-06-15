@@ -1,0 +1,13 @@
+{
+  "id": "clang.linker.multiple-definition",
+  "compiler": "clang++",
+  "type": "error",
+  "messagePattern": "multiple definition of",
+  "title": "Multiple symbol definitions",
+  "explanation": "Linker found more than one compiled definition for the same symbol.",
+  "quickFixes": [
+    "Keep exactly one definition for each global symbol.",
+    "Move non-inline definitions out of headers into one source file.",
+    "Mark small header implementations inline when appropriate."
+  ]
+}

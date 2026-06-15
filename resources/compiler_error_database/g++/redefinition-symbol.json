@@ -1,0 +1,13 @@
+{
+  "id": "gcc.name.redefinition",
+  "compiler": "g++",
+  "type": "error",
+  "messagePattern": "redefinition of",
+  "title": "Redefinition error",
+  "explanation": "The same symbol was defined more than once in a way the linker/compiler cannot accept.",
+  "quickFixes": [
+    "Remove duplicate symbol definitions.",
+    "Use header guards to avoid repeated declarations/definitions.",
+    "Place one definition in a single source file."
+  ]
+}
