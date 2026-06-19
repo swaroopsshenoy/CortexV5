@@ -152,6 +152,21 @@ function toPerformanceRiskMessage(performanceRisk) {
     .join("\n");
 }
 
+function formatComplexityFactors(factors) {
+  if (!factors) {
+    return "";
+  }
+  if (Array.isArray(factors)) {
+    return factors.join(", ");
+  }
+  if (typeof factors === "object") {
+    return Object.entries(factors)
+      .map(([key, val]) => `${key}: ${val}`)
+      .join(", ");
+  }
+  return String(factors);
+}
+
 function toComplexityMessage(result) {
   if (!result) {
     return "";
@@ -160,13 +175,15 @@ function toComplexityMessage(result) {
   const complexity = payload?.complexityEstimate ?? result.complexity ?? {};
   const time = complexity.time ?? {};
   const space = complexity.space ?? {};
+  const formattedTimeFactors = formatComplexityFactors(time.factors);
+  const formattedSpaceFactors = formatComplexityFactors(space.factors);
   const lines = [
     "Complexity Analysis:",
     `Time: ${time.bigO ?? "N/A"} (${time.confidence ?? "unknown"})`,
-    time.factors ? `  Factors: ${time.factors.join(", ")}` : "",
+    formattedTimeFactors ? `  Factors: ${formattedTimeFactors}` : "",
     time.notes && Array.isArray(time.notes) && time.notes.length > 0 ? `  Notes: ${time.notes.join("; ")}` : "",
     `Space: ${space.bigO ?? "N/A"} (${space.confidence ?? "unknown"})`,
-    space.factors ? `  Factors: ${space.factors.join(", ")}` : "",
+    formattedSpaceFactors ? `  Factors: ${formattedSpaceFactors}` : "",
     space.notes && Array.isArray(space.notes) && space.notes.length > 0 ? `  Notes: ${space.notes.join("; ")}` : ""
   ].filter(Boolean);
   return lines.join("\n");

@@ -90,31 +90,51 @@ function buildPerformanceRiskSection(risk) {
   `;
 }
 
+function formatComplexityFactors(factors) {
+  if (!factors) {
+    return "";
+  }
+  if (Array.isArray(factors)) {
+    return factors.join(", ");
+  }
+  if (typeof factors === "object") {
+    return Object.entries(factors)
+      .map(([key, val]) => `${key}: ${val}`)
+      .join(", ");
+  }
+  return String(factors);
+}
+
 function buildComplexitySection(stdoutOrPayload) {
   let payload = stdoutOrPayload;
   if (typeof payload === "string") {
     try { payload = JSON.parse(payload); } catch { payload = null; }
   }
-  const complexity = payload?.complexityEstimate ?? payload?.complexity ?? {};
+  const complexity =
+    payload?.complexityEstimate ??
+    payload?.complexity ??
+    (payload?.time || payload?.space ? payload : {});
   const time = complexity.time ?? {};
   const space = complexity.space ?? {};
   if (!time.bigO && !space.bigO) {
     return `<p class="muted">No complexity data available.</p>`;
   }
+  const formattedTimeFactors = formatComplexityFactors(time.factors);
+  const formattedSpaceFactors = formatComplexityFactors(space.factors);
   return `
     <div class="complexity-grid">
       <div class="complexity-card">
         <div class="complexity-label">Time Complexity</div>
         <div class="complexity-value">${esc(time.bigO ?? "N/A")}</div>
         <div class="complexity-meta">Confidence: ${esc(time.confidence ?? "unknown")}</div>
-        ${time.factors ? `<div class="complexity-meta">Factors: ${esc(time.factors.join(", "))}</div>` : ""}
+        ${formattedTimeFactors ? `<div class="complexity-meta">Factors: ${esc(formattedTimeFactors)}</div>` : ""}
         ${Array.isArray(time.notes) && time.notes.length > 0 ? `<div class="complexity-meta">Notes: ${esc(time.notes.join("; "))}</div>` : ""}
       </div>
       <div class="complexity-card">
         <div class="complexity-label">Space Complexity</div>
         <div class="complexity-value">${esc(space.bigO ?? "N/A")}</div>
         <div class="complexity-meta">Confidence: ${esc(space.confidence ?? "unknown")}</div>
-        ${space.factors ? `<div class="complexity-meta">Factors: ${esc(space.factors.join(", "))}</div>` : ""}
+        ${formattedSpaceFactors ? `<div class="complexity-meta">Factors: ${esc(formattedSpaceFactors)}</div>` : ""}
         ${Array.isArray(space.notes) && space.notes.length > 0 ? `<div class="complexity-meta">Notes: ${esc(space.notes.join("; "))}</div>` : ""}
       </div>
     </div>

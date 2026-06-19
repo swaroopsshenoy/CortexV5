@@ -168,3 +168,53 @@ test("generateReport renders code smells section when provided", async (t) => {
   assert.ok(html.includes("long-function"), "should list code smell kind");
   assert.ok(html.includes("Function exceeds 100 lines"), "should show smell message");
 });
+
+test("generateReport renders complexity analysis with object factors successfully", async (t) => {
+  const tmpDir = await makeTempDir();
+  t.after(() => fs.rm(tmpDir, { recursive: true, force: true }));
+
+  const service = createReportService({
+    projectRoot: tmpDir,
+    toProjectPath: fakeToProjectPath(tmpDir)
+  });
+
+  const analyzeResult = {
+    code: 0,
+    stdout: JSON.stringify({
+      complexityEstimate: {
+        time: {
+          bigO: "O(n^2)",
+          confidence: "high",
+          factors: {
+            loops: 2,
+            nestingDepth: 2,
+            recursion: 0
+          },
+          notes: ["Loop nesting drives time."]
+        },
+        space: {
+          bigO: "O(1)",
+          confidence: "medium",
+          factors: {
+            recursion: 0,
+            allocations: 0
+          },
+          notes: []
+        }
+      }
+    }),
+    stderr: ""
+  };
+
+  const result = await service.generateReport({
+    sourcePath: "workspace\\main.cpp",
+    outputPath: "workspace\\main_report.html",
+    analyzeResult
+  });
+
+  const html = await fs.readFile(result.outputPath, "utf8");
+  assert.ok(html.includes("Complexity Analysis"), "should have complexity section");
+  assert.ok(html.includes("O(n^2)"), "should show time bigO");
+  assert.ok(html.includes("loops: 2, nestingDepth: 2, recursion: 0"), "should show formatted time factors");
+  assert.ok(html.includes("recursion: 0, allocations: 0"), "should show formatted space factors");
+});
