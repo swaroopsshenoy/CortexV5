@@ -81,6 +81,20 @@ function buildCompileArgs(sourcePath, outputPath, extraArgs = []) {
   return [sourcePath, "-o", outputPath, ...extraArgs];
 }
 
+function buildCompileToObjectArgs(sourcePath, objectPath, extraArgs = []) {
+  if (!Array.isArray(extraArgs) || extraArgs.some((item) => typeof item !== "string")) {
+    throw new Error("extraArgs must be string array");
+  }
+  return ["-c", sourcePath, "-o", objectPath, ...extraArgs];
+}
+
+function buildLinkArgs(objectPaths, outputPath, extraArgs = []) {
+  if (!Array.isArray(extraArgs) || extraArgs.some((item) => typeof item !== "string")) {
+    throw new Error("extraArgs must be string array");
+  }
+  return [...objectPaths, "-o", outputPath, ...extraArgs];
+}
+
 function spawnCompileProcess(compiler, args, options = {}) {
   const { cwd, onStdout, onStderr } = options;
   if (typeof cwd !== "string" || cwd.trim().length === 0) {
@@ -226,11 +240,137 @@ function createClangService(options) {
         diagnostics,
         explanations
       };
+    },
+
+    /**
+     * Compile multiple .cpp files using separate compilation:
+     * 1. Each source -> .o (parallel)
+     * 2. Link all .o -> outputPath
+     *
+     * payload: { sourceFiles: string[], outputPath?, extraArgs?, compiler? }
+     */
+    async compileMultiFile(payload = {}) {
+      if (!Array.isArray(payload.sourceFiles) || payload.sourceFiles.length === 0) {
+        throw new Error("compileMultiFile: sourceFiles must be non-empty array");
+      }
+      const compiler = await detectCompiler(payload.compiler, commandExistsImpl);
+      const outputPath = toProjectPath(payload.outputPath ?? "build\\app.exe");
+      const extraArgs = mergeWindowsClangCompatArgs(compiler, payload.extraArgs ?? []);
+
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+
+      const fileCount = payload.sourceFiles.length;
+      emitCompileStderr?.(
+        `[multi-file] compiling ${fileCount} file${fileCount !== 1 ? "s" : ""} with ${compiler}...\n`
+      );
+
+      let allStdout = "";
+      let allStderr = "";
+      const objectPaths = [];
+
+      // Step 1: compile each source to .o
+      for (const sourceRelPath of payload.sourceFiles) {
+        const sourcePath = toProjectPath(sourceRelPath);
+        const baseName = path.basename(sourcePath, path.extname(sourcePath));
+        const objectPath = path.join(path.dirname(outputPath), `${baseName}.o`);
+        objectPaths.push(objectPath);
+
+        const compileArgs = buildCompileToObjectArgs(sourcePath, objectPath, extraArgs);
+        emitCompileCommand?.(compiler, compileArgs);
+
+        const result = await spawnCompileProcessImpl(compiler, compileArgs, {
+          cwd: projectRoot,
+          onStdout: emitCompileStdout,
+          onStderr: emitCompileStderr
+        });
+        allStdout += result.stdout;
+        allStderr += result.stderr;
+
+        if (result.code !== 0) {
+          const diagnostics = parseCompilerDiagnostics(allStderr);
+          const explanations = await errorExplanationService.mapDiagnostics({ compiler, diagnostics });
+          return { code: result.code, stdout: allStdout, stderr: allStderr, diagnostics, explanations };
+        }
+      }
+
+      // Step 2: link all .o files
+      const linkArgs = buildLinkArgs(objectPaths, outputPath, []);
+      emitCompileCommand?.(compiler, linkArgs);
+
+      const linkResult = await spawnCompileProcessImpl(compiler, linkArgs, {
+        cwd: projectRoot,
+        onStdout: emitCompileStdout,
+        onStderr: emitCompileStderr
+      });
+      allStdout += linkResult.stdout;
+      allStderr += linkResult.stderr;
+
+      const diagnostics = parseCompilerDiagnostics(allStderr);
+      const explanations = await errorExplanationService.mapDiagnostics({ compiler, diagnostics });
+      return { code: linkResult.code, stdout: allStdout, stderr: allStderr, diagnostics, explanations };
+    },
+
+    /**
+     * Build a CMake project:
+     * 1. cmake -S <sourceDir> -B <buildDir>  (configure)
+     * 2. cmake --build <buildDir>             (build)
+     *
+     * payload: { projectRootPath: string, buildPath: string }
+     * projectRootPath and buildPath are workspace-relative paths.
+     */
+    async compileCmake(payload = {}) {
+      if (typeof payload.projectRootPath !== "string" || payload.projectRootPath.trim().length === 0) {
+        throw new Error("compileCmake: projectRootPath must be non-empty string");
+      }
+      if (typeof payload.buildPath !== "string" || payload.buildPath.trim().length === 0) {
+        throw new Error("compileCmake: buildPath must be non-empty string");
+      }
+
+      const sourceDir = toProjectPath(payload.projectRootPath);
+      const buildDir = toProjectPath(payload.buildPath);
+      await fs.mkdir(buildDir, { recursive: true });
+
+      let allStdout = "";
+      let allStderr = "";
+
+      // cmake not in ALLOWED_COMMANDS whitelist — spawn directly (controlled path)
+      const spawnCmake = (args) =>
+        spawnCompileProcessImpl("cmake", args, {
+          cwd: projectRoot,
+          onStdout: emitCompileStdout,
+          onStderr: emitCompileStderr
+        });
+
+      emitCompileStderr?.("[cmake] configuring...\n");
+      const configureArgs = ["-S", sourceDir, "-B", buildDir];
+      emitCompileCommand?.("cmake", configureArgs);
+      const configureResult = await spawnCmake(configureArgs);
+      allStdout += configureResult.stdout;
+      allStderr += configureResult.stderr;
+
+      if (configureResult.code !== 0) {
+        const diagnostics = parseCompilerDiagnostics(allStderr);
+        const explanations = await errorExplanationService.mapDiagnostics({ compiler: "g++", diagnostics });
+        return { code: configureResult.code, stdout: allStdout, stderr: allStderr, diagnostics, explanations };
+      }
+
+      emitCompileStderr?.("[cmake] building...\n");
+      const buildArgs = ["--build", buildDir];
+      emitCompileCommand?.("cmake", buildArgs);
+      const buildResult = await spawnCmake(buildArgs);
+      allStdout += buildResult.stdout;
+      allStderr += buildResult.stderr;
+
+      const diagnostics = parseCompilerDiagnostics(allStderr);
+      const explanations = await errorExplanationService.mapDiagnostics({ compiler: "g++", diagnostics });
+      return { code: buildResult.code, stdout: allStdout, stderr: allStderr, diagnostics, explanations };
     }
   });
 }
 
 module.exports = {
   createClangService,
-  mergeWindowsClangCompatArgs
+  mergeWindowsClangCompatArgs,
+  buildCompileToObjectArgs,
+  buildLinkArgs
 };

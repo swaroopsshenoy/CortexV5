@@ -354,12 +354,37 @@ export default function App() {
 
     setStatus("Compiling...");
     try {
-      const result = await ipcClient.compile({
-        compiler: "clang++",
-        sourcePath: toWorkspaceSourcePath(activeTab.path),
-        outputPath: `${toWorkspaceSourcePath(activeProject?.buildPath ?? "build")}\\app.exe`,
-        code: activeTab.code
-      });
+      let compilePayload;
+
+      if (activeProject?.type === "cmake") {
+        compilePayload = {
+          projectType: "cmake",
+          projectRootPath: `workspace\\${activeProject.rootPath}`.replace(/\\+/g, "\\"),
+          buildPath: `workspace\\${activeProject.buildPath}`.replace(/\\+/g, "\\")
+        };
+        terminalRef.current?.writeSystem(
+          `[cmake] Building project at ${activeProject.rootPath}...`
+        );
+      } else if (activeProject?.type === "multi-file" && activeProject.sourceFiles?.length > 1) {
+        compilePayload = {
+          projectType: "multi-file",
+          compiler: "clang++",
+          sourceFiles: activeProject.sourceFiles.map((f) => `workspace\\${f}`.replace(/\\+/g, "\\")),
+          outputPath: `workspace\\${activeProject.buildPath}\\app.exe`.replace(/\\+/g, "\\")
+        };
+        terminalRef.current?.writeSystem(
+          `[multi-file] Compiling ${activeProject.sourceFiles.length} files...`
+        );
+      } else {
+        compilePayload = {
+          compiler: "clang++",
+          sourcePath: toWorkspaceSourcePath(activeTab.path),
+          outputPath: `${toWorkspaceSourcePath(activeProject?.buildPath ?? "build")}\\app.exe`,
+          code: activeTab.code
+        };
+      }
+
+      const result = await ipcClient.compile(compilePayload);
       terminalRef.current?.writeSystem(
         [
           "Compile completed.",

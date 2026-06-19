@@ -28,8 +28,13 @@ require("dotenv").config({
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..", "..");
 const RENDERER_ENTRY = path.join(PROJECT_ROOT, "dist", "renderer", "index.html");
 const WORKSPACE_ROOT = path.join(PROJECT_ROOT, "workspace");
-const ALLOWED_COMMANDS = new Set(["clang++", "g++", "python", "python3"]);
+const ALLOWED_COMMANDS = new Set(["clang++", "g++", "python", "python3", "cmake"]);
 const SOURCE_FILE_EXTENSIONS = new Set([".c", ".cc", ".cpp", ".cxx", ".c++"]);
+
+// When running as a packaged build, use frozen Python drivers
+if (app.isPackaged) {
+  process.env.CORTEX_PYTHON_FROZEN = "true";
+}
 
 let mainWindow;
 let terminalSession = null;
@@ -538,6 +543,20 @@ function registerIpcHandler(channel, handler) {
 }
 
 registerIpcHandler(IPC_CHANNELS.compile, async (payload) => {
+  if (payload.projectType === "cmake") {
+    return getClangService().compileCmake({
+      projectRootPath: payload.projectRootPath,
+      buildPath: payload.buildPath
+    });
+  }
+  if (payload.projectType === "multi-file" && Array.isArray(payload.sourceFiles)) {
+    return getClangService().compileMultiFile({
+      compiler: payload.compiler,
+      sourceFiles: payload.sourceFiles,
+      outputPath: payload.outputPath,
+      extraArgs: payload.extraArgs
+    });
+  }
   return getClangService().compile(payload);
 });
 
@@ -737,9 +756,35 @@ registerIpcHandler(IPC_CHANNELS.autoSaveDiscard, async (payload) => {
   return { ok: true };
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   getAutoSaveService().start();
   createWindow();
+
+  // Compiler startup check — notify user if no C++ compiler is on PATH
+  const { exec } = require("node:child_process");
+  const checkCompiler = (cmd) =>
+    new Promise((resolve) => {
+      exec(`${cmd} --version`, (err) => resolve(!err));
+    });
+  const [hasClang, hasGpp] = await Promise.all([
+    checkCompiler("clang++"),
+    checkCompiler("g++")
+  ]);
+  if (!hasClang && !hasGpp) {
+    const warn = [
+      "",
+      "⚠️  No C++ compiler detected on PATH.",
+      "   Cortex++ V5 requires clang++ or g++ to compile code.",
+      "",
+      "   Install one of:",
+      "     • LLVM/Clang  → https://releases.llvm.org",
+      "     • MSYS2+MinGW → https://www.msys2.org  (provides g++)",
+      "",
+      "   Then restart Cortex++ V5.",
+      ""
+    ].join("\n");
+    mainWindow?.webContents.send(IPC_EVENTS.terminalData, warn);
+  }
 });
 
 app.on("window-all-closed", () => {

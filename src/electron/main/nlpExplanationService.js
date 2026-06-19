@@ -149,9 +149,16 @@ function createNlpExplanationService(options = {}) {
     path.join(options.projectRoot, "resources", "nlp_explanation_templates");
   const runProcess = options.runProcess;
   const pythonCommand = options.pythonCommand ?? "python";
+
+  // In packaged builds, use frozen PyInstaller executable; otherwise use Python script
+  const isFrozen = process.env.CORTEX_PYTHON_FROZEN === "true";
   const driverPath =
     options.driverPath ??
-    path.join(options.projectRoot, "src", "electron", "main", "py", "nlp_refine_driver.py");
+    (isFrozen
+      ? path.join(process.resourcesPath ?? options.projectRoot, "python", "nlp_refine_driver.exe")
+      : path.join(options.projectRoot, "src", "electron", "main", "py", "nlp_refine_driver.py"));
+  const driverCommand = isFrozen ? driverPath : pythonCommand;
+  const driverArgs = isFrozen ? [] : [driverPath];
   const enableRefinement = options.enableRefinement !== false;
 
   let templatesCache = null;
@@ -202,7 +209,7 @@ function createNlpExplanationService(options = {}) {
         actions: item.expanded.actions
       }))
     });
-    const result = await runProcess(pythonCommand, [driverPath], {
+    const result = await runProcess(driverCommand, driverArgs, {
       cwd: options.projectRoot,
       input: payload
     });

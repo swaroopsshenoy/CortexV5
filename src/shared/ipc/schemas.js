@@ -7,7 +7,12 @@ const compileRequestSchema = z
     sourcePath: z.string().min(1).optional(),
     outputPath: z.string().min(1).optional(),
     extraArgs: z.array(z.string()).optional(),
-    code: z.string().optional()
+    code: z.string().optional(),
+    // Multi-file / cmake routing fields
+    projectType: z.enum(["single-file", "multi-file", "cmake"]).optional(),
+    sourceFiles: z.array(z.string().min(1)).optional(),
+    projectRootPath: z.string().min(1).optional(),
+    buildPath: z.string().min(1).optional()
   })
   .strict();
 

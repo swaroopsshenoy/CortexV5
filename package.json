@@ -9,7 +9,43 @@
     "renderer:build": "vite build --config vite.config.mjs",
     "dev": "concurrently -k \"npm:renderer:dev\" \"npm:electron:dev\"",
     "build": "npm run renderer:build",
-    "test": "node --test src/electron/main/errorExplanationService.test.js src/electron/main/astAnalysisService.test.js src/electron/main/optimizationSuggestionService.test.js src/electron/main/executionSimulatorService.test.js src/electron/main/benchmarkRunnerService.test.js src/electron/main/comparativeProfilingService.test.js src/electron/main/clangService.test.js src/electron/main/performanceRiskFeatures.test.js src/electron/main/performanceRiskService.test.js src/electron/main/nlpExplanationService.test.js"
+    "dist": "npm run renderer:build && electron-builder",
+    "test": "node --test src/electron/main/errorExplanationService.test.js src/electron/main/astAnalysisService.test.js src/electron/main/optimizationSuggestionService.test.js src/electron/main/executionSimulatorService.test.js src/electron/main/benchmarkRunnerService.test.js src/electron/main/comparativeProfilingService.test.js src/electron/main/clangService.test.js src/electron/main/performanceRiskFeatures.test.js src/electron/main/performanceRiskService.test.js src/electron/main/nlpExplanationService.test.js src/electron/main/reportService.test.js src/electron/main/autoSaveService.test.js src/electron/main/integration/pipeline.test.js src/electron/main/integration/stability.test.js"
+  },
+  "build": {
+    "appId": "com.cortex.v5",
+    "productName": "Cortex++ V5",
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist/installer"
+    },
+    "files": [
+      "src/electron/**/*",
+      "src/shared/**/*",
+      "dist/renderer/**/*",
+      "resources/**/*",
+      "!resources/ml_performance_dataset/programs/**"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/python",
+        "to": "python",
+        "filter": ["*.exe"]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico",
+      "verifyUpdateCodeSignature": false,
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Cortex++ V5"
+    }
   },
   "keywords": [],
   "author": "",

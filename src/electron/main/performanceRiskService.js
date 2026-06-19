@@ -23,7 +23,16 @@ function createPerformanceRiskService(options = {}) {
   }
 
   const modelPath = toProjectPath(options.modelPath ?? "resources\\ml_models\\performance_risk.joblib");
-  const driverPath = path.join(projectRoot, "src", "electron", "main", "py", "performance_risk_driver.py");
+
+  // In packaged builds, use frozen PyInstaller executable; otherwise use Python script
+  const isFrozen = process.env.CORTEX_PYTHON_FROZEN === "true";
+  const driverPath = isFrozen
+    ? path.join(process.resourcesPath ?? projectRoot, "python", "performance_risk_driver.exe")
+    : path.join(projectRoot, "src", "electron", "main", "py", "performance_risk_driver.py");
+  const driverCommand = isFrozen ? driverPath : pythonCommand;
+  const driverArgs = isFrozen
+    ? ["--model", modelPath]
+    : [driverPath, "--model", modelPath];
 
   function unavailable(reason) {
     return {
@@ -63,8 +72,8 @@ function createPerformanceRiskService(options = {}) {
       const inputJson = JSON.stringify({ features });
 
       const driverResult = await runProcess(
-        pythonCommand,
-        [driverPath, "--model", modelPath],
+        driverCommand,
+        driverArgs,
         {
           cwd: projectRoot,
           input: inputJson
