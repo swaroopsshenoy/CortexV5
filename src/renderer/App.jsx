@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CppEditor from "./components/Editor/CppEditor";
 import TerminalPane from "./components/Terminal/TerminalPane";
+import FileExplorer from "./components/FileExplorer/FileExplorer";
 import { useEditorStore } from "./components/Editor/useEditorStore";
 import { ipcClient } from "./ipc/client";
 
@@ -225,27 +226,7 @@ function selectTopQuickFixCards(explanations) {
     .slice(0, 3);
 }
 
-function renderTree(entries, selectedPath, onSelect) {
-  return (
-    <ul className="workspace-tree">
-      {entries.map((entry) => (
-        <li key={entry.relativePath}>
-          <button
-            type="button"
-            className={`tree-item ${selectedPath === entry.relativePath ? "selected" : ""}`}
-            onClick={() => onSelect(entry)}
-          >
-            <span className="tree-kind">{entry.kind === "directory" ? "D" : "F"}</span>
-            <span>{entry.name}</span>
-          </button>
-          {entry.kind === "directory" && entry.children && entry.children.length > 0
-            ? renderTree(entry.children, selectedPath, onSelect)
-            : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
+/* renderTree removed — replaced by FileExplorer component */
 
 export default function App() {
   const tabs = useEditorStore((state) => state.tabs);
@@ -262,10 +243,8 @@ export default function App() {
   const [status, setStatus] = useState("Ready.");
   const [diagnostics, setDiagnostics] = useState([]);
   const [workspaceEntries, setWorkspaceEntries] = useState([]);
+  const [workspaceRootPath, setWorkspaceRootPath] = useState("");
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState("");
-  const [createPathInput, setCreatePathInput] = useState("");
-  const [renamePathInput, setRenamePathInput] = useState("");
-  const [projectPathInput, setProjectPathInput] = useState("");
   const [activeProject, setActiveProject] = useState(null);
   const [compileExplanations, setCompileExplanations] = useState([]);
   const [focusedDiagnostic, setFocusedDiagnostic] = useState(null);
@@ -277,8 +256,15 @@ export default function App() {
   const terminalRef = useRef(null);
 
   const refreshWorkspace = useCallback(async () => {
-    const result = await ipcClient.workspaceList();
-    setWorkspaceEntries(result.entries);
+    try {
+      const result = await ipcClient.workspaceList({ targetPath: "" });
+      setWorkspaceEntries(result.entries);
+      if (result.path) {
+        setWorkspaceRootPath(result.path);
+      }
+    } catch (error) {
+      console.error("Workspace refresh failed:", error);
+    }
   }, []);
 
   const loadProfileHistory = useCallback(async () => {
@@ -343,7 +329,6 @@ export default function App() {
   const handleSelectWorkspaceEntry = useCallback(
     async (entry) => {
       setSelectedWorkspacePath(entry.relativePath);
-      setRenamePathInput(entry.relativePath);
       if (entry.kind !== "file") {
         return;
       }
@@ -681,8 +666,8 @@ export default function App() {
   }
 
 
-  async function handleCreate(kind) {
-    const normalizedInputPath = normalizeWorkspacePath(createPathInput);
+  async function handleCreate(path, kind) {
+    const normalizedInputPath = normalizeWorkspacePath(path);
     if (!normalizedInputPath) {
       setStatus("Enter path first.");
       return;
@@ -699,103 +684,73 @@ export default function App() {
           code: ""
         });
         setSelectedWorkspacePath(normalizedInputPath);
-        setRenamePathInput(normalizedInputPath);
       }
-      setCreatePathInput("");
       setStatus(`${kind} created: ${normalizedInputPath}`);
     } catch (error) {
       setStatus(`Create error.\n${error.message}`);
     }
   }
 
-  async function handleRename() {
-    if (!selectedWorkspacePath) {
-      setStatus("Select item first.");
-      return;
-    }
-    const normalizedNextPath = normalizeWorkspacePath(renamePathInput);
-    if (!normalizedNextPath) {
-      setStatus("Enter rename path.");
+  async function handleRename(oldPath, newPath) {
+    const normalizedOld = normalizeWorkspacePath(oldPath);
+    const normalizedNew = normalizeWorkspacePath(newPath);
+    if (!normalizedOld || !normalizedNew) {
+      setStatus("Invalid rename paths.");
       return;
     }
     try {
       await ipcClient.workspaceRename({
-        targetPath: selectedWorkspacePath,
-        nextPath: normalizedNextPath
+        targetPath: normalizedOld,
+        nextPath: normalizedNew
       });
-      renameWorkspacePath(selectedWorkspacePath, normalizedNextPath);
-      setSelectedWorkspacePath(normalizedNextPath);
-      setRenamePathInput(normalizedNextPath);
+      renameWorkspacePath(normalizedOld, normalizedNew);
+      setSelectedWorkspacePath(normalizedNew);
       await refreshWorkspace();
-      setStatus(`Renamed: ${selectedWorkspacePath} -> ${normalizedNextPath}`);
+      setStatus(`Renamed: ${normalizedOld} -> ${normalizedNew}`);
     } catch (error) {
       setStatus(`Rename error.\n${error.message}`);
     }
   }
 
-  async function handleDelete() {
-    if (!selectedWorkspacePath) {
+  async function handleDelete(targetPath) {
+    const normalized = normalizeWorkspacePath(targetPath || selectedWorkspacePath);
+    if (!normalized) {
       setStatus("Select item first.");
       return;
     }
-    const confirmed = window.confirm(`Delete ${selectedWorkspacePath}?`);
+    const confirmed = window.confirm(`Delete ${normalized}?`);
     if (!confirmed) {
       return;
     }
     try {
       await ipcClient.workspaceDelete({
-        targetPath: selectedWorkspacePath
+        targetPath: normalized
       });
-      removeWorkspacePath(selectedWorkspacePath);
+      removeWorkspacePath(normalized);
       setSelectedWorkspacePath("");
       await refreshWorkspace();
-      setStatus(`Deleted: ${selectedWorkspacePath}`);
+      setStatus(`Deleted: ${normalized}`);
     } catch (error) {
       setStatus(`Delete error.\n${error.message}`);
     }
   }
 
-  async function handleLoadProject() {
-    const normalizedInputPath = normalizeWorkspacePath(projectPathInput);
-    if (!normalizedInputPath) {
-      setStatus("Enter project path first.");
-      return;
-    }
 
+
+  async function handleSelectFolder() {
     try {
-      const result = await ipcClient.workspaceLoadProject({
-        targetPath: normalizedInputPath
-      });
-      setActiveProject(result.project);
-      await refreshWorkspace();
-
-      if (result.project.entryFile) {
-        const fileResult = await ipcClient.workspaceRead({
-          targetPath: result.project.entryFile
-        });
-        openWorkspaceTab({
-          path: result.project.entryFile,
-          code: fileResult.content
-        });
-        setSelectedWorkspacePath(result.project.entryFile);
-        setRenamePathInput(result.project.entryFile);
+      setStatus("Opening folder dialog...");
+      const result = await ipcClient.workspaceSelectFolder({});
+      if (result && result.path) {
+        setWorkspaceRootPath(result.path);
+        await refreshWorkspace();
+        setStatus(`Workspace root changed to: ${result.path}`);
+      } else {
+        setStatus("Folder selection canceled.");
       }
-
-      setStatus(
-        [
-          `Project loaded: ${result.project.type}`,
-          `Root: ${result.project.rootPath || "."}`,
-          `Build: ${result.project.buildPath}`,
-          `Sources: ${result.project.sourceFiles.length}`
-        ].join("\n")
-      );
     } catch (error) {
-      setStatus(`Project load error.\n${error.message}`);
+      setStatus(`Select folder error: ${error.message}`);
     }
-  }
-
-  if (!activeTab) {
-    return null;
   }
 
   return (
@@ -835,52 +790,17 @@ export default function App() {
 
       <div className="content">
         <aside className="workspace-pane">
-          <div className="workspace-header">
-            <strong>Workspace</strong>
-            <input
-              className="workspace-input"
-              type="text"
-              value={projectPathInput}
-              onChange={(event) => setProjectPathInput(event.target.value)}
-              placeholder="Project path/file to load"
-            />
-            <div className="workspace-actions">
-              <button type="button" onClick={handleLoadProject}>
-                Load Project
-              </button>
-            </div>
-            <input
-              className="workspace-input"
-              type="text"
-              value={createPathInput}
-              onChange={(event) => setCreatePathInput(event.target.value)}
-              placeholder="Path for +File/+Dir"
-            />
-            <input
-              className="workspace-input"
-              type="text"
-              value={renamePathInput}
-              onChange={(event) => setRenamePathInput(event.target.value)}
-              placeholder="Rename selected to..."
-            />
-            <div className="workspace-actions">
-              <button type="button" onClick={() => handleCreate("file")}>
-                +File
-              </button>
-              <button type="button" onClick={() => handleCreate("directory")}>
-                +Dir
-              </button>
-              <button type="button" onClick={handleRename}>
-                Rename
-              </button>
-              <button type="button" onClick={handleDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-          <div className="workspace-body">
-            {renderTree(workspaceEntries, selectedWorkspacePath, handleSelectWorkspaceEntry)}
-          </div>
+          <FileExplorer
+            entries={workspaceEntries}
+            rootPath={workspaceRootPath}
+            selectedPath={selectedWorkspacePath}
+            onSelectFolder={handleSelectFolder}
+            onSelectEntry={handleSelectWorkspaceEntry}
+            onCreate={handleCreate}
+            onRename={handleRename}
+            onDelete={handleDelete}
+            onRefresh={() => refreshWorkspace().catch(() => {})}
+          />
           <section className="callstack-pane">
             <div className="callstack-header">
               <strong>Call Stack</strong>
@@ -962,41 +882,47 @@ export default function App() {
         </aside>
 
         <section className="editor-pane">
-          <div className="tabbar">
-            {tabs.map((tab) => (
-              <div key={tab.id} className={`tab ${tab.id === activeTab.id ? "active" : ""}`}>
-                <button type="button" className="tab-label" onClick={() => setActiveTab(tab.id)}>
-                  {tab.label}
-                </button>
-                <button
-                  type="button"
-                  className="tab-close"
-                  aria-label={`Close ${tab.label}`}
-                  onClick={() => closeTab(tab.id)}
-                >
-                  ×
-                </button>
+          {activeTab ? (
+            <>
+              <div className="tabbar">
+                {tabs.map((tab) => (
+                  <div key={tab.id} className={`tab ${tab.id === activeTab.id ? "active" : ""}`}>
+                    <button type="button" className="tab-label" onClick={() => setActiveTab(tab.id)}>
+                      {tab.label}
+                    </button>
+                    <button
+                      type="button"
+                      className="tab-close"
+                      aria-label={`Close ${tab.label}`}
+                      onClick={() => closeTab(tab.id)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="editor-host">
-            <CppEditor
-              tab={activeTab}
-              diagnostics={diagnostics.filter((item) =>
-                isDiagnosticForTab(item.file, activeTab.path, activeTab.label)
-              )}
-              focusDiagnostic={
-                focusedDiagnostic &&
-                isDiagnosticForTab(focusedDiagnostic.file, activeTab.path, activeTab.label)
-                  ? focusedDiagnostic
-                  : null
-              }
-              onCodeChange={handleCodeChange}
-              onSave={handleSave}
-              onCompile={handleCompile}
-            />
-          </div>
+              <div className="editor-host">
+                <CppEditor
+                  tab={activeTab}
+                  diagnostics={diagnostics.filter((item) =>
+                    isDiagnosticForTab(item.file, activeTab.path, activeTab.label)
+                  )}
+                  focusDiagnostic={
+                    focusedDiagnostic &&
+                    isDiagnosticForTab(focusedDiagnostic.file, activeTab.path, activeTab.label)
+                      ? focusedDiagnostic
+                      : null
+                  }
+                  onCodeChange={handleCodeChange}
+                  onSave={handleSave}
+                  onCompile={handleCompile}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="editor-empty">No active tab. Open a file from the explorer or create a new tab.</div>
+          )}
         </section>
 
         <TerminalPane

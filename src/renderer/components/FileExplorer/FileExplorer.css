@@ -1,0 +1,355 @@
+/* ── FileExplorer ── VS Code-style file tree ── */
+
+.file-explorer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  font-size: 13px;
+  user-select: none;
+}
+
+/* ── Toolbar ── */
+.fe-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid #334155;
+  gap: 6px;
+}
+
+.fe-toolbar-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fe-toolbar-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.fe-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.fe-toolbar-btn:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+/* ── Project loader ── */
+.fe-project-loader {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #334155;
+}
+
+.fe-project-input {
+  flex: 1;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  outline: none;
+}
+
+.fe-project-input::placeholder {
+  color: #475569;
+}
+
+.fe-project-input:focus {
+  border-color: #60a5fa;
+}
+
+.fe-project-btn {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+
+.fe-project-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+/* ── Tree container ── */
+.fe-tree-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.fe-tree-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fe-tree-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fe-tree-container::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.fe-tree-container::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ── Tree list ── */
+.fe-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Tree row ── */
+.fe-row {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding-right: 10px;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: background 0.08s;
+}
+
+.fe-row:hover {
+  background: #1e293b;
+}
+
+.fe-row.fe-row--selected {
+  background: #1e3a5f;
+}
+
+.fe-row.fe-row--selected:hover {
+  background: #1e3a6f;
+}
+
+/* ── Indent guides ── */
+.fe-indent {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.fe-indent-guide {
+  width: 18px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.fe-indent-guide::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #334155;
+}
+
+/* ── Chevron ── */
+.fe-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.fe-chevron--open {
+  transform: rotate(90deg);
+}
+
+.fe-chevron--hidden {
+  visibility: hidden;
+}
+
+/* ── File icon ── */
+.fe-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* Icon colors by type */
+.fe-icon--folder { color: #e8a854; }
+.fe-icon--folder-open { color: #e8a854; }
+.fe-icon--cpp { color: #569cd6; }
+.fe-icon--header { color: #b48ead; }
+.fe-icon--cmake { color: #6ab04c; }
+.fe-icon--txt { color: #94a3b8; }
+.fe-icon--json { color: #e8c75a; }
+.fe-icon--md { color: #60a5fa; }
+.fe-icon--exe { color: #ef4444; }
+.fe-icon--default { color: #94a3b8; }
+
+/* ── File label ── */
+.fe-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e2e8f0;
+  font-size: 13px;
+  padding-left: 4px;
+  line-height: 22px;
+}
+
+/* Folder labels slightly different */
+.fe-label--dir {
+  font-weight: 500;
+}
+
+/* ── Inline rename input ── */
+.fe-rename-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #60a5fa;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 2px;
+  padding: 0 4px;
+  font-size: 13px;
+  height: 20px;
+  margin-left: 4px;
+  outline: none;
+}
+
+/* ── Context menu ── */
+.fe-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+  animation: fe-menu-in 0.1s ease-out;
+}
+
+@keyframes fe-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fe-context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #e2e8f0;
+  padding: 6px 16px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  transition: background 0.08s;
+}
+
+.fe-context-item:hover {
+  background: #334155;
+}
+
+.fe-context-item--danger {
+  color: #f87171;
+}
+
+.fe-context-item--danger:hover {
+  background: #7f1d1d33;
+}
+
+.fe-context-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.fe-context-sep {
+  height: 1px;
+  background: #334155;
+  margin: 4px 0;
+}
+
+/* ── Empty state ── */
+.fe-empty {
+  padding: 20px 16px;
+  color: #475569;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── New file/folder inline input ── */
+.fe-new-input-row {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding-right: 10px;
+  background: #0f172a;
+}
+
+.fe-new-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #60a5fa;
+  background: #020617;
+  color: #e2e8f0;
+  border-radius: 2px;
+  padding: 0 4px;
+  font-size: 13px;
+  height: 20px;
+  margin-left: 4px;
+  outline: none;
+}

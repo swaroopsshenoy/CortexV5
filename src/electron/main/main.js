@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
@@ -27,7 +27,7 @@ require("dotenv").config({
 
 const PROJECT_ROOT = path.resolve(__dirname, "..", "..", "..");
 const RENDERER_ENTRY = path.join(PROJECT_ROOT, "dist", "renderer", "index.html");
-const WORKSPACE_ROOT = path.join(PROJECT_ROOT, "workspace");
+let currentWorkspaceRoot = path.join(PROJECT_ROOT, "workspace");
 const ALLOWED_COMMANDS = new Set(["clang++", "g++", "python", "python3", "cmake"]);
 const SOURCE_FILE_EXTENSIONS = new Set([".c", ".cc", ".cpp", ".cxx", ".c++"]);
 
@@ -140,7 +140,7 @@ function getReportService() {
 function getAutoSaveService() {
   if (!autoSaveService) {
     autoSaveService = createAutoSaveService({
-      workspaceRoot: WORKSPACE_ROOT
+      workspaceRoot: currentWorkspaceRoot
     });
   }
   return autoSaveService;
@@ -231,8 +231,8 @@ function toWorkspacePath(inputPath = "") {
     throw new Error("Invalid workspace path input");
   }
 
-  const resolved = path.resolve(WORKSPACE_ROOT, inputPath);
-  const relative = path.relative(WORKSPACE_ROOT, resolved);
+  const resolved = path.resolve(currentWorkspaceRoot, inputPath);
+  const relative = path.relative(currentWorkspaceRoot, resolved);
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error("Path outside workspace not allowed");
   }
@@ -240,7 +240,7 @@ function toWorkspacePath(inputPath = "") {
 }
 
 function toWorkspaceRelative(inputPath) {
-  return path.relative(WORKSPACE_ROOT, inputPath).split(path.sep).join("\\");
+  return path.relative(currentWorkspaceRoot, inputPath).split(path.sep).join("\\");
 }
 
 async function readWorkspaceEntries(parentAbsolutePath) {
@@ -437,7 +437,7 @@ function spawnExecutable(executablePath, args, options = {}) {
 }
 
 function createTerminalSession(cwd) {
-  const resolvedCwd = cwd ? toWorkspacePath(cwd) : WORKSPACE_ROOT;
+  const resolvedCwd = cwd ? toWorkspacePath(cwd) : currentWorkspaceRoot;
   const shell = process.platform === "win32" ? "powershell.exe" : process.env.SHELL ?? "bash";
   const shellArgs = process.platform === "win32" ? ["-NoLogo", "-NoProfile"] : [];
   const ptyProcess = pty.spawn(shell, shellArgs, {
@@ -620,14 +620,15 @@ registerIpcHandler(IPC_CHANNELS.profileHistory, async (payload) => {
 });
 
 registerIpcHandler(IPC_CHANNELS.workspaceList, async (payload) => {
-  await fs.mkdir(WORKSPACE_ROOT, { recursive: true });
+  await fs.mkdir(currentWorkspaceRoot, { recursive: true });
   const targetPath = toWorkspacePath(payload.targetPath ?? "");
   const stats = await fs.stat(targetPath);
   if (!stats.isDirectory()) {
     throw new Error("targetPath must point to directory");
   }
   return {
-    entries: await readWorkspaceEntries(targetPath)
+    entries: await readWorkspaceEntries(targetPath),
+    path: targetPath
   };
 });
 
@@ -654,7 +655,7 @@ registerIpcHandler(IPC_CHANNELS.workspaceRename, async (payload) => {
 
 registerIpcHandler(IPC_CHANNELS.workspaceDelete, async (payload) => {
   const targetPath = toWorkspacePath(payload.targetPath);
-  if (targetPath === WORKSPACE_ROOT) {
+  if (targetPath === currentWorkspaceRoot) {
     throw new Error("Deleting workspace root is not allowed");
   }
   await fs.rm(targetPath, { recursive: true, force: false });
@@ -684,6 +685,18 @@ registerIpcHandler(IPC_CHANNELS.workspaceLoadProject, async (payload) => {
     ok: true,
     project: await detectWorkspaceProject(payload.targetPath)
   };
+});
+
+registerIpcHandler(IPC_CHANNELS.workspaceSelectFolder, async (payload) => {
+  const result = await dialog.showOpenDialog({
+    title: 'Select Workspace Folder',
+    properties: ['openDirectory']
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    currentWorkspaceRoot = result.filePaths[0];
+    return { path: currentWorkspaceRoot };
+  }
+  return { path: null };
 });
 
 registerIpcHandler(IPC_CHANNELS.terminalStart, async (payload) => {

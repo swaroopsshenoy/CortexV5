@@ -57,6 +57,9 @@ export const ipcClient = Object.freeze({
   workspaceLoadProject(payload) {
     return getApi().workspaceLoadProject(payload);
   },
+  workspaceSelectFolder(payload) {
+    return getApi().workspaceSelectFolder(payload);
+  },
   terminalStart(payload) {
     return getApi().terminalStart(payload);
   },

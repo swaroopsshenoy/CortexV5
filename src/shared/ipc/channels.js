@@ -16,6 +16,7 @@ const IPC_CHANNELS = Object.freeze({
   workspaceRead: "workspace:read",
   workspaceWrite: "workspace:write",
   workspaceLoadProject: "workspace:loadProject",
+  workspaceSelectFolder: "workspace:selectFolder",
   terminalStart: "terminal:start",
   terminalWrite: "terminal:write",
   terminalResize: "terminal:resize",

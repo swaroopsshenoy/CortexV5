@@ -603,7 +603,8 @@ const workspaceEntrySchema = z.lazy(() =>
 
 const workspaceListResponseSchema = z
   .object({
-    entries: z.array(workspaceEntrySchema)
+    entries: z.array(workspaceEntrySchema),
+    path: z.string().optional()
   })
   .strict();
 
@@ -663,6 +664,14 @@ const reportGenerateResponseSchema = z
   })
   .strict();
 
+const workspaceSelectFolderRequestSchema = z.object({}).strict();
+
+const workspaceSelectFolderResponseSchema = z
+  .object({
+    path: z.string().nullable()
+  })
+  .strict();
+
 const requestSchemas = Object.freeze({
   [IPC_CHANNELS.compile]: compileRequestSchema,
   [IPC_CHANNELS.run]: runRequestSchema,
@@ -681,6 +690,7 @@ const requestSchemas = Object.freeze({
   [IPC_CHANNELS.workspaceRead]: workspaceReadRequestSchema,
   [IPC_CHANNELS.workspaceWrite]: workspaceWriteRequestSchema,
   [IPC_CHANNELS.workspaceLoadProject]: workspaceLoadProjectRequestSchema,
+  [IPC_CHANNELS.workspaceSelectFolder]: workspaceSelectFolderRequestSchema,
   [IPC_CHANNELS.terminalStart]: terminalStartRequestSchema,
   [IPC_CHANNELS.terminalWrite]: terminalWriteRequestSchema,
   [IPC_CHANNELS.terminalResize]: terminalResizeRequestSchema,
@@ -712,6 +722,7 @@ const responseSchemas = Object.freeze({
   [IPC_CHANNELS.workspaceRead]: workspaceReadResponseSchema,
   [IPC_CHANNELS.workspaceWrite]: workspaceMutationResponseSchema,
   [IPC_CHANNELS.workspaceLoadProject]: workspaceLoadProjectResponseSchema,
+  [IPC_CHANNELS.workspaceSelectFolder]: workspaceSelectFolderResponseSchema,
   [IPC_CHANNELS.terminalStart]: terminalStartResponseSchema,
   [IPC_CHANNELS.terminalWrite]: terminalMutationResponseSchema,
   [IPC_CHANNELS.terminalResize]: terminalMutationResponseSchema,

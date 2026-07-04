@@ -4,7 +4,7 @@
   "main": "src/electron/main/main.js",
   "scripts": {
     "electron:start": "npm run renderer:build && electron .",
-    "electron:dev": "cross-env ELECTRON_USE_DEV_SERVER=true ELECTRON_RENDERER_URL=http://localhost:5173 wait-on tcp:5173 && electron .",
+    "electron:dev": "cross-env ELECTRON_USE_DEV_SERVER=true ELECTRON_RENDERER_URL=http://localhost:5174 wait-on tcp:5174 && electron .",
     "renderer:dev": "vite --config vite.config.mjs",
     "renderer:build": "vite build --config vite.config.mjs",
     "dev": "concurrently -k \"npm:renderer:dev\" \"npm:electron:dev\"",
@@ -30,7 +30,9 @@
       {
         "from": "dist/python",
         "to": "python",
-        "filter": ["*.exe"]
+        "filter": [
+          "*.exe"
+        ]
       }
     ],
     "win": {

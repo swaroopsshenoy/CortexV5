@@ -17,6 +17,7 @@ const IPC_CHANNELS = Object.freeze({
   workspaceRead: "workspace:read",
   workspaceWrite: "workspace:write",
   workspaceLoadProject: "workspace:loadProject",
+  workspaceSelectFolder: "workspace:selectFolder",
   terminalStart: "terminal:start",
   terminalWrite: "terminal:write",
   terminalResize: "terminal:resize",
@@ -415,6 +416,12 @@ const api = Object.freeze({
       IPC_CHANNELS.workspaceLoadProject,
       payload,
       validateWorkspaceLoadProjectPayload
+    ),
+  workspaceSelectFolder: (payload) =>
+    invokeSafe(
+      IPC_CHANNELS.workspaceSelectFolder,
+      payload,
+      (input) => validateEmptyObjectPayload(input, "workspaceSelectFolder")
     ),
   terminalStart: (payload) =>
     invokeSafe(IPC_CHANNELS.terminalStart, payload, validateTerminalStartPayload),
