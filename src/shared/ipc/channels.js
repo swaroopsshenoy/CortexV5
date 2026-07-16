@@ -27,7 +27,8 @@ const IPC_CHANNELS = Object.freeze({
   autoSaveStage: "autosave:stage",
   autoSaveRecover: "autosave:recover",
   autoSaveList: "autosave:list",
-  autoSaveDiscard: "autosave:discard"
+  autoSaveDiscard: "autosave:discard",
+  workspaceOpenExternal: "workspace:openExternal"
 });
 
 const IPC_CHANNEL_SET = new Set(Object.values(IPC_CHANNELS));

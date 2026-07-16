@@ -166,7 +166,6 @@ function TreeRow({
             if (e.key === "Enter") onRenameSubmit();
             if (e.key === "Escape") onRenameCancel();
           }}
-          onBlur={onRenameCancel}
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
@@ -206,7 +205,6 @@ function NewInputRow({ depth, icon, onSubmit, onCancel }) {
           if (e.key === "Enter" && value.trim()) onSubmit(value.trim());
           if (e.key === "Escape") onCancel();
         }}
-        onBlur={onCancel}
         placeholder="Enter name..."
       />
     </div>
@@ -460,7 +458,7 @@ export default function FileExplorer({
           <button
             type="button"
             className="fe-toolbar-btn"
-            title="Open Folder"
+            data-tooltip="Open Folder"
             onClick={onSelectFolder}
           >
             📁
@@ -468,7 +466,7 @@ export default function FileExplorer({
           <button
             type="button"
             className="fe-toolbar-btn"
-            title="New File"
+            data-tooltip="New File"
             onClick={toolbarNewFile}
           >
             📄
@@ -476,7 +474,7 @@ export default function FileExplorer({
           <button
             type="button"
             className="fe-toolbar-btn"
-            title="New Folder"
+            data-tooltip="New Folder"
             onClick={toolbarNewFolder}
           >
             📁
@@ -484,7 +482,7 @@ export default function FileExplorer({
           <button
             type="button"
             className="fe-toolbar-btn"
-            title="Collapse All"
+            data-tooltip="Collapse All"
             onClick={collapseAll}
           >
             ⊟
@@ -492,7 +490,7 @@ export default function FileExplorer({
           <button
             type="button"
             className="fe-toolbar-btn"
-            title="Refresh"
+            data-tooltip="Refresh"
             onClick={onRefresh}
           >
             ↻
@@ -508,6 +506,7 @@ export default function FileExplorer({
             type="button"
             className="fe-open-folder-btn"
             onClick={onSelectFolder}
+            data-tooltip="Open a workspace folder"
           >
             Open Folder
           </button>

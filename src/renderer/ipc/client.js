@@ -45,6 +45,9 @@ export const ipcClient = Object.freeze({
   workspaceWrite(payload) {
     return getApi().workspaceWrite(payload);
   },
+  workspaceOpenExternal(payload) {
+    return getApi().workspaceOpenExternal(payload);
+  },
   workspaceCreate(payload) {
     return getApi().workspaceCreate(payload);
   },

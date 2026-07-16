@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
@@ -30,6 +30,18 @@ const RENDERER_ENTRY = path.join(PROJECT_ROOT, "dist", "renderer", "index.html")
 let currentWorkspaceRoot = path.join(PROJECT_ROOT, "workspace");
 const ALLOWED_COMMANDS = new Set(["clang++", "g++", "python", "python3", "cmake"]);
 const SOURCE_FILE_EXTENSIONS = new Set([".c", ".cc", ".cpp", ".cxx", ".c++"]);
+const IGNORED_WORKSPACE_DIRS = new Set([".git", "node_modules", "build", "dist", ".vscode"]);
+
+try {
+  const historyPath = path.join(app.getPath("userData"), "workspace-history.json");
+  const raw = require("node:fs").readFileSync(historyPath, "utf8");
+  const parsed = JSON.parse(raw);
+  if (parsed.lastWorkspace) {
+    currentWorkspaceRoot = parsed.lastWorkspace;
+  }
+} catch (e) {
+  // Ignore missing or malformed history file
+}
 
 // When running as a packaged build, use frozen Python drivers
 if (app.isPackaged) {
@@ -131,7 +143,7 @@ function getReportService() {
   if (!reportService) {
     reportService = createReportService({
       projectRoot: PROJECT_ROOT,
-      toProjectPath
+      toProjectPath: toWorkspacePath
     });
   }
   return reportService;
@@ -244,8 +256,24 @@ function toWorkspaceRelative(inputPath) {
 }
 
 async function readWorkspaceEntries(parentAbsolutePath) {
-  const dirents = await fs.readdir(parentAbsolutePath, { withFileTypes: true });
-  dirents.sort((left, right) => {
+  let dirents = [];
+  try {
+    dirents = await fs.readdir(parentAbsolutePath, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === "EPERM" || error.code === "EACCES") {
+      return [];
+    }
+    throw error;
+  }
+
+  const filteredDirents = dirents.filter((entry) => {
+    if (entry.isDirectory() && IGNORED_WORKSPACE_DIRS.has(entry.name)) {
+      return false;
+    }
+    return true;
+  });
+
+  filteredDirents.sort((left, right) => {
     if (left.isDirectory() !== right.isDirectory()) {
       return left.isDirectory() ? -1 : 1;
     }
@@ -253,7 +281,7 @@ async function readWorkspaceEntries(parentAbsolutePath) {
   });
 
   return Promise.all(
-    dirents.map(async (entry) => {
+    filteredDirents.map(async (entry) => {
       const absoluteEntryPath = path.join(parentAbsolutePath, entry.name);
       const relativePath = toWorkspaceRelative(absoluteEntryPath);
       if (entry.isDirectory()) {
@@ -594,7 +622,8 @@ registerIpcHandler(IPC_CHANNELS.benchmark, async (payload) => {
   if (result.status === "ok" && typeof result.summary.meanMs === "number") {
     await getProfileHistoryService().append({
       timestamp: new Date().toISOString(),
-      meanMs: result.summary.meanMs
+      meanMs: result.summary.meanMs,
+      file: payload.sourcePath
     });
   }
   return result;
@@ -694,6 +723,13 @@ registerIpcHandler(IPC_CHANNELS.workspaceSelectFolder, async (payload) => {
   });
   if (!result.canceled && result.filePaths.length > 0) {
     currentWorkspaceRoot = result.filePaths[0];
+    try {
+      const historyPath = path.join(app.getPath("userData"), "workspace-history.json");
+      await fs.mkdir(path.dirname(historyPath), { recursive: true });
+      await fs.writeFile(historyPath, JSON.stringify({ lastWorkspace: currentWorkspaceRoot }), "utf8");
+    } catch (e) {
+      console.error("Failed to write workspace history", e);
+    }
     return { path: currentWorkspaceRoot };
   }
   return { path: null };
@@ -766,6 +802,15 @@ registerIpcHandler(IPC_CHANNELS.autoSaveList, async () => {
 
 registerIpcHandler(IPC_CHANNELS.autoSaveDiscard, async (payload) => {
   await getAutoSaveService().discard(payload.relativePath);
+  return { ok: true };
+});
+
+registerIpcHandler(IPC_CHANNELS.workspaceOpenExternal, async (payload) => {
+  const targetPath = toWorkspacePath(payload.targetPath);
+  const errorMsg = await shell.openPath(targetPath);
+  if (errorMsg) {
+    throw new Error(errorMsg);
+  }
   return { ok: true };
 });
 

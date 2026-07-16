@@ -19,7 +19,8 @@ function normalizeStoredEntry(entry) {
   }
   return {
     timestamp: entry.timestamp,
-    meanMs: entry.meanMs
+    meanMs: entry.meanMs,
+    file: entry.file
   };
 }
 
@@ -35,7 +36,8 @@ function normalizeNewEntry(entry) {
   }
   return {
     timestamp: entry.timestamp,
-    meanMs: entry.meanMs
+    meanMs: entry.meanMs,
+    file: entry.file
   };
 }
 

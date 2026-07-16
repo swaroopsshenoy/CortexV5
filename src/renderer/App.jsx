@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CppEditor from "./components/Editor/CppEditor";
-import TerminalPane from "./components/Terminal/TerminalPane";
 import FileExplorer from "./components/FileExplorer/FileExplorer";
+import BenchmarkModal from "./components/BenchmarkModal";
+import Resizer from "./components/Resizer";
+import InspectorPane from "./components/InspectorPane";
+import TerminalPane from "./components/Terminal/TerminalPane";
 import { useEditorStore } from "./components/Editor/useEditorStore";
 import { ipcClient } from "./ipc/client";
 
@@ -253,11 +256,51 @@ export default function App() {
   const [profileHistory, setProfileHistory] = useState([]);
   const [lastAnalyzeResult, setLastAnalyzeResult] = useState(null);
   const [lastCompileResult, setLastCompileResult] = useState(null);
+  const [batchBenchmarkResults, setBatchBenchmarkResults] = useState([]);
+  const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
   const terminalRef = useRef(null);
+  const contentRef = useRef(null);
+  const autoSaveTimerRef = useRef(null);
+
+  const handleLeftResize = useCallback((deltaX) => {
+    if (!contentRef.current) return;
+    const currentWidth = parseFloat(getComputedStyle(contentRef.current).getPropertyValue("--left-sidebar-width")) || 280;
+    const newWidth = Math.max(150, Math.min(800, currentWidth + deltaX));
+    contentRef.current.style.setProperty("--left-sidebar-width", `${newWidth}px`);
+  }, []);
+
+  const handleRightResize = useCallback((deltaX) => {
+    if (!contentRef.current) return;
+    const currentWidth = parseFloat(getComputedStyle(contentRef.current).getPropertyValue("--right-sidebar-width")) || 360;
+    const newWidth = Math.max(200, Math.min(800, currentWidth - deltaX));
+    contentRef.current.style.setProperty("--right-sidebar-width", `${newWidth}px`);
+    
+    // trigger xterm resize
+    if (terminalRef.current && terminalRef.current.resize) {
+      setTimeout(() => terminalRef.current.resize(), 10);
+    } else {
+      window.dispatchEvent(new Event("resize"));
+    }
+  }, []);
+
+  const handleBottomResize = useCallback((deltaY) => {
+    if (!contentRef.current) return;
+    // The resizer sits above the terminal panel, so dragging down (positive delta) decreases terminal height
+    // Actually, we can attach this to the app-shell or content flex direction
+    const currentHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bottom-panel-height")) || 250;
+    const newHeight = Math.max(100, Math.min(800, currentHeight - deltaY));
+    document.documentElement.style.setProperty("--bottom-panel-height", `${newHeight}px`);
+    
+    if (terminalRef.current && terminalRef.current.resize) {
+      setTimeout(() => terminalRef.current.resize(), 10);
+    } else {
+      window.dispatchEvent(new Event("resize"));
+    }
+  }, []);
 
   const refreshWorkspace = useCallback(async () => {
     try {
-      const result = await ipcClient.workspaceList({ targetPath: "" });
+      const result = await ipcClient.workspaceList({});
       setWorkspaceEntries(result.entries);
       if (result.path) {
         setWorkspaceRootPath(result.path);
@@ -395,7 +438,8 @@ export default function App() {
           toExplanationMessage(result.explanations)
         ]
           .filter(Boolean)
-          .join("\n")
+          .join("\n"),
+        result.stderr ? "error" : "success"
       );
       setCompileExplanations(result.explanations ?? []);
       setLastCompileResult(result);
@@ -415,6 +459,7 @@ export default function App() {
       setCompileExplanations([]);
       setDiagnostics([]);
       setStatus(`Compile error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Compile error: ${error.message}`, "error");
     }
   }
 
@@ -474,7 +519,8 @@ export default function App() {
           result.stderr ? `stderr:\n${result.stderr}` : ""
         ]
           .filter(Boolean)
-          .join("\n")
+          .join("\n"),
+        result.code === 0 ? "success" : "error"
       );
       setStatus(
         result.code === 0
@@ -483,6 +529,7 @@ export default function App() {
       );
     } catch (error) {
       setStatus(`Run error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Run error: ${error.message}`, "error");
     }
   }
 
@@ -500,7 +547,7 @@ export default function App() {
         maxLoopIterations: 20
       });
       setSimulationResult(result);
-      terminalRef.current?.writeSystem(toSimulationMessage(result));
+      terminalRef.current?.writeSystem(toSimulationMessage(result), "info");
       setStatus(
         result.status === "ok"
           ? `Simulation completed.\nSteps: ${result.summary.totalSteps}`
@@ -509,6 +556,7 @@ export default function App() {
     } catch (error) {
       setSimulationResult(null);
       setStatus(`Simulation error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Simulation error: ${error.message}`, "error");
     }
   }
 
@@ -516,8 +564,37 @@ export default function App() {
     if (!activeTab) {
       return;
     }
+    
+    if (activeProject && activeProject.type === "multi-file") {
+      setStatus("Benchmarking multi-file project...");
+      try {
+        const results = [];
+        for (const file of activeProject.sourceFiles) {
+          setStatus(`Benchmarking ${file}...`);
+          terminalRef.current?.writeSystem(`Benchmarking ${file}...`, "system");
+          const outputPath = `${toWorkspaceSourcePath(activeProject.buildPath ?? "build")}\\benchmark_tmp.exe`;
+          const result = await ipcClient.benchmark({
+            compiler: "clang++",
+            sourcePath: toWorkspaceSourcePath(file),
+            outputPath: outputPath,
+            runs: 5,
+            warmupRuns: 1
+          });
+          terminalRef.current?.writeSystem(`[${file}] ` + toBenchmarkMessage(result), result.status === "error" ? "error" : "success");
+          results.push({ ...result, fileName: file, outputPath });
+        }
+        setBatchBenchmarkResults(results);
+        setIsBenchmarkModalOpen(true);
+        setStatus("Batch benchmarking completed.");
+      } catch (error) {
+        setStatus(`Batch benchmark error.\n${error.message}`);
+        terminalRef.current?.writeSystem(`Batch benchmark error: ${error.message}`, "error");
+      }
+      return;
+    }
+    
     if (activeProject && activeProject.type !== "single-file") {
-      setStatus("Benchmark supports single-file projects only.");
+      setStatus("Benchmark supports single-file or multi-file projects only.");
       return;
     }
 
@@ -531,7 +608,7 @@ export default function App() {
         runs: 5,
         warmupRuns: 1
       });
-      terminalRef.current?.writeSystem(toBenchmarkMessage(result));
+      terminalRef.current?.writeSystem(toBenchmarkMessage(result), result.status === "error" ? "error" : "success");
       if (result.status === "ok") {
         setBenchmarkResult(result);
         setStatus(`Benchmark completed.\nMean: ${result.summary.meanMs} ms`);
@@ -550,6 +627,7 @@ export default function App() {
       setStatus(`Benchmark run failed.\n${lastRun?.stderr || lastRun?.stdout || ""}`);
     } catch (error) {
       setStatus(`Benchmark error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Benchmark error: ${error.message}`, "error");
     }
   }
 
@@ -571,12 +649,14 @@ export default function App() {
           toNlpExplanationsMessage(result.nlpExplanations)
         ]
           .filter(Boolean)
-          .join("\n\n")
+          .join("\n\n"),
+        "info"
       );
       setStatus("Complexity, risk, and NLP analysis completed.");
       setLastAnalyzeResult(result);
     } catch (error) {
       setStatus(`Complexity analysis error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Analysis error: ${error.message}`, "error");
     }
   }
 
@@ -590,8 +670,10 @@ export default function App() {
     try {
       await ipcClient.storeProfileBaseline({ benchmarkResult });
       setStatus("Baseline profile stored.");
+      terminalRef.current?.writeSystem("Baseline profile stored.", "success");
     } catch (error) {
       setStatus(`Store baseline error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Store baseline error: ${error.message}`, "error");
     }
   }
 
@@ -604,33 +686,47 @@ export default function App() {
     setStatus("Comparing profiles...");
     try {
       const result = await ipcClient.compareProfile({ benchmarkResult });
-      terminalRef.current?.writeSystem(toComparisonMessage(result));
+      terminalRef.current?.writeSystem(toComparisonMessage(result), "info");
       setStatus("Profiling comparison completed.");
     } catch (error) {
       setStatus(`Compare profile error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Compare error: ${error.message}`, "error");
     }
   }
 
   async function handleGenerateReport() {
-    if (!activeTab) {
-      return;
-    }
     setStatus("Generating report...");
     try {
+      const sourcePath = activeTab ? toWorkspaceSourcePath(activeTab.path) : undefined;
+      const base = activeTab && activeTab.path ? activeTab.path.split(/[\\/]/).pop().replace(/\.[^/.]+$/, "") : "report";
+      const filename = `${base}_report.html`;
+
       const result = await ipcClient.reportGenerate({
-        sourcePath: toWorkspaceSourcePath(activeTab.path),
+        sourcePath: sourcePath,
+        outputPath: filename,
         compiler: "clang++",
         analyzeResult: lastAnalyzeResult ?? undefined,
         benchmarkResult: benchmarkResult ?? undefined,
         compileResult: lastCompileResult ?? undefined
       });
       terminalRef.current?.writeSystem(
-        `Report generated: ${result.outputPath} (${result.sizeBytes} bytes)`
+        `Report generated: ${result.outputPath} (${result.sizeBytes} bytes)`,
+        "success"
       );
       setStatus(`Report saved: ${result.outputPath}`);
-      refreshWorkspace().catch(() => {});
+      await refreshWorkspace();
+
+      if (window.confirm(`Report generated!\n\nDo you want to open ${filename} in your default browser?`)) {
+        try {
+          await ipcClient.workspaceOpenExternal({ targetPath: filename });
+          setStatus(`Opened externally: ${filename}`);
+        } catch (err) {
+          setStatus(`Open error.\n${err.message}`);
+        }
+      }
     } catch (error) {
       setStatus(`Report error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Report error: ${error.message}`, "error");
     }
   }
 
@@ -662,6 +758,22 @@ export default function App() {
     updateActiveCode(code);
     if (activeTab?.path) {
       handleAutoSaveStage(activeTab.path, code);
+
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      autoSaveTimerRef.current = setTimeout(async () => {
+        try {
+          await ipcClient.workspaceWrite({
+            targetPath: activeTab.path,
+            content: code
+          });
+          refreshWorkspace().catch(() => {});
+          setStatus(`Auto-saved: ${activeTab.path}`);
+        } catch (error) {
+          setStatus(`Auto-save error.\n${error.message}`);
+        }
+      }, 1000);
     }
   }
 
@@ -677,14 +789,16 @@ export default function App() {
         targetPath: normalizedInputPath,
         kind
       });
+      // Small delay to ensure the OS has written the directory entry before we read it
+      await new Promise((resolve) => setTimeout(resolve, 150));
       await refreshWorkspace();
       if (kind === "file") {
         openWorkspaceTab({
           path: normalizedInputPath,
           code: ""
         });
-        setSelectedWorkspacePath(normalizedInputPath);
       }
+      setSelectedWorkspacePath(normalizedInputPath);
       setStatus(`${kind} created: ${normalizedInputPath}`);
     } catch (error) {
       setStatus(`Create error.\n${error.message}`);
@@ -758,38 +872,30 @@ export default function App() {
       <div className="topbar">
         <strong>CortexV5 - Monaco C++ IDE</strong>
         <div className="actions">
-          <button type="button" onClick={addTab}>
-            New Tab
+          <button type="button" onClick={handleSave} data-tooltip="Save active file">
+            Save
           </button>
-          <button type="button" onClick={handleCompile}>
-            Compile
-          </button>
-          <button type="button" onClick={handleRun}>
-            Run
-          </button>
-          <button type="button" onClick={handleBenchmark}>
+          <button type="button" onClick={handleBenchmark} data-tooltip="Run benchmark test">
             Benchmark
           </button>
-          <button type="button" onClick={handleAnalyzeComplexity}>
+          <button type="button" onClick={handleAnalyzeComplexity} data-tooltip="Analyze code complexity">
             Analyze Complexity
           </button>
-          <button type="button" onClick={handleStoreBaseline}>
+          <button type="button" onClick={handleStoreBaseline} data-tooltip="Store benchmark as baseline">
             Store Baseline
           </button>
-          <button type="button" onClick={handleCompareProfile}>
+          <button type="button" onClick={handleCompareProfile} data-tooltip="Compare with baseline">
             Compare Profile
           </button>
-          <button type="button" onClick={handleSimulate}>
-            Simulate
-          </button>
-          <button type="button" id="btn-generate-report" onClick={handleGenerateReport}>
+          <button type="button" onClick={handleGenerateReport} data-tooltip="Generate performance report">
             Generate Report
           </button>
         </div>
       </div>
 
-      <div className="content">
-        <aside className="workspace-pane">
+      <div className="main-area">
+        <div className="content" ref={contentRef}>
+          <aside className="workspace-pane">
           <FileExplorer
             entries={workspaceEntries}
             rootPath={workspaceRootPath}
@@ -881,6 +987,8 @@ export default function App() {
           </section>
         </aside>
 
+        <Resizer onDrag={handleLeftResize} />
+
         <section className="editor-pane">
           {activeTab ? (
             <>
@@ -895,6 +1003,7 @@ export default function App() {
                       className="tab-close"
                       aria-label={`Close ${tab.label}`}
                       onClick={() => closeTab(tab.id)}
+                      data-tooltip="Close tab"
                     >
                       ×
                     </button>
@@ -925,8 +1034,9 @@ export default function App() {
           )}
         </section>
 
-        <TerminalPane
-          ref={terminalRef}
+        <Resizer onDrag={handleRightResize} direction="horizontal" />
+
+        <InspectorPane
           quickFixCards={selectTopQuickFixCards(compileExplanations)}
           onQuickFixSelect={handleQuickFixSelect}
           profileHistory={profileHistory}
@@ -934,7 +1044,20 @@ export default function App() {
         />
       </div>
 
-      <div className="status">{status}</div>
+      <Resizer onDrag={handleBottomResize} direction="vertical" />
+      
+      <TerminalPane 
+        ref={terminalRef} 
+        onCompile={handleCompile}
+        onRun={handleRun}
+      />
+    </div>
+      {isBenchmarkModalOpen && (
+        <BenchmarkModal
+          results={batchBenchmarkResults}
+          onClose={() => setIsBenchmarkModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

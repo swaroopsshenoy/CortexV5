@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cortex++ Analysis Report – main1.cpp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --surface2: #242740;
+      --accent: #7c3aed;
+      --accent2: #4f46e5;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #2d3748;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    a { color: var(--accent); }
+    .report-wrapper { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    .report-header { text-align: center; padding: 48px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+    .report-header h1 { font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, #7c3aed, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .report-header .subtitle { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+    .report-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+    .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .icon { font-size: 1.2rem; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: #fff; margin-right: 4px; }
+    .meta-table { width: 100%; border-collapse: collapse; }
+    .meta-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+    .meta-table .meta-key { color: var(--muted); font-weight: 600; width: 180px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .data-table th { text-align: left; padding: 8px 10px; background: var(--surface2); color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .risk-summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .risk-card { background: var(--surface2); border-radius: var(--radius); padding: 16px 24px; flex: 1; min-width: 120px; text-align: center; }
+    .risk-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .risk-value { font-size: 1.4rem; font-weight: 800; }
+    .complexity-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .complexity-card { background: var(--surface2); border-radius: var(--radius); padding: 16px 20px; flex: 1; min-width: 180px; }
+    .complexity-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .complexity-value { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+    .complexity-meta { font-size: 0.82rem; color: var(--muted); }
+    .bench-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bench-card { background: var(--surface2); border-radius: var(--radius); padding: 12px 20px; flex: 1; min-width: 100px; text-align: center; }
+    .bench-label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .bench-value { font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
+    .bench-meta { color: var(--muted); font-size: 0.85rem; }
+    .explanation-card, .nlp-card, .opt-card { background: var(--surface2); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 12px; }
+    .explanation-header, .nlp-header, .opt-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .nlp-detail { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+    .fix-list { padding-left: 18px; margin-top: 6px; }
+    .fix-list li { color: var(--muted); font-size: 0.87rem; margin-bottom: 2px; }
+    .report-footer { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 32px 0 16px; border-top: 1px solid var(--border); margin-top: 40px; }
+    @media print {
+      body { background: #fff; color: #111; }
+      .report-wrapper { max-width: 100%; }
+      .report-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="report-wrapper">
+
+  <header class="report-header">
+    <h1>Cortex++ Analysis Report</h1>
+    <div class="subtitle">
+      <strong>workspace\main1.cpp</strong> &nbsp;|&nbsp;
+      Generated: 2026-07-16T07:39:17.080Z
+    </div>
+  </header>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">📋</span>Report Metadata</h2>
+    <table class="meta-table"><tr><td class="meta-key">Source File</td><td>workspace\main1.cpp</td></tr><tr><td class="meta-key">Generated At</td><td>2026-07-16T07:39:17.080Z</td></tr><tr><td class="meta-key">Compiler</td><td>clang++</td></tr><tr><td class="meta-key">Platform</td><td>win32</td></tr><tr><td class="meta-key">Cortex Version</td><td>V5</td></tr></table>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🎯</span>Performance Risk Prediction</h2>
+    <p class="muted">No performance risk data.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">📊</span>Complexity Analysis</h2>
+    <p class="muted">No complexity data available.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">⚡</span>Benchmark Results</h2>
+    <p class="muted">No benchmark data. Run Benchmark first.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🔴</span>Compiler Diagnostics</h2>
+    <p class="muted">No diagnostics.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">💡</span>Error Explanations</h2>
+    <p class="muted">No compiler explanations.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🚀</span>Optimization Suggestions</h2>
+    <p class="muted">No optimization suggestions. Run Analyze Complexity.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🌡️</span>Code Smells</h2>
+    <p class="muted">No code smells detected.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🔍</span>Semantic Issues</h2>
+    <p class="muted">No semantic issues detected.</p>
+  </section>
+
+  <section class="report-section">
+    <h2 class="section-title"><span class="icon">🧠</span>NLP Explanations</h2>
+    <p class="muted">No NLP explanations.</p>
+  </section>
+
+  <footer class="report-footer">
+    Cortex++ V5 &nbsp;|&nbsp; Intelligent C++ Research &amp; Optimization Platform &nbsp;|&nbsp; 2026-07-16T07:39:17.080Z
+  </footer>
+
+</div>
+</body>
+</html>

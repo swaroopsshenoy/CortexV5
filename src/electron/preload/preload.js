@@ -28,7 +28,8 @@ const IPC_CHANNELS = Object.freeze({
   autoSaveStage: "autosave:stage",
   autoSaveRecover: "autosave:recover",
   autoSaveList: "autosave:list",
-  autoSaveDiscard: "autosave:discard"
+  autoSaveDiscard: "autosave:discard",
+  workspaceOpenExternal: "workspace:openExternal"
 });
 const IPC_CHANNEL_SET = new Set(Object.values(IPC_CHANNELS));
 const IPC_EVENTS = Object.freeze({
@@ -268,6 +269,14 @@ function validateWorkspaceWritePayload(payload) {
   return payload;
 }
 
+function validateWorkspaceOpenExternalPayload(payload) {
+  if (!isObject(payload)) {
+    throw new Error("workspaceOpenExternal payload must be object");
+  }
+  validateString(payload.targetPath, "targetPath");
+  return payload;
+}
+
 function validateWorkspaceLoadProjectPayload(payload) {
   if (!isObject(payload)) {
     throw new Error("workspaceLoadProject payload must be object");
@@ -405,6 +414,8 @@ const api = Object.freeze({
     invokeSafe(IPC_CHANNELS.workspaceRead, payload, validateWorkspaceReadPayload),
   workspaceWrite: (payload) =>
     invokeSafe(IPC_CHANNELS.workspaceWrite, payload, validateWorkspaceWritePayload),
+  workspaceOpenExternal: (payload) =>
+    invokeSafe(IPC_CHANNELS.workspaceOpenExternal, payload, validateWorkspaceOpenExternalPayload),
   workspaceCreate: (payload) =>
     invokeSafe(IPC_CHANNELS.workspaceCreate, payload, validateWorkspaceCreatePayload),
   workspaceRename: (payload) =>

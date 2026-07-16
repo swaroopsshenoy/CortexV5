@@ -193,6 +193,12 @@ const autoSaveDiscardRequestSchema = z
   })
   .strict();
 
+const workspaceOpenExternalRequestSchema = z
+  .object({
+    targetPath: z.string().min(1)
+  })
+  .strict();
+
 const autoSaveStageResponseSchema = z
   .object({ ok: z.literal(true) })
   .strict();
@@ -210,6 +216,10 @@ const autoSaveListResponseSchema = z
   .strict();
 
 const autoSaveDiscardResponseSchema = z
+  .object({ ok: z.literal(true) })
+  .strict();
+
+const workspaceOpenExternalResponseSchema = z
   .object({ ok: z.literal(true) })
   .strict();
 
@@ -580,7 +590,8 @@ const profileBaselineResponseSchema = z
 const profileHistoryEntrySchema = z
   .object({
     timestamp: z.string().min(1),
-    meanMs: z.number().min(0)
+    meanMs: z.number().min(0),
+    file: z.string().optional()
   })
   .strict();
 
@@ -701,7 +712,8 @@ const requestSchemas = Object.freeze({
   [IPC_CHANNELS.autoSaveStage]: autoSaveStageRequestSchema,
   [IPC_CHANNELS.autoSaveRecover]: autoSaveRecoverRequestSchema,
   [IPC_CHANNELS.autoSaveList]: autoSaveListRequestSchema,
-  [IPC_CHANNELS.autoSaveDiscard]: autoSaveDiscardRequestSchema
+  [IPC_CHANNELS.autoSaveDiscard]: autoSaveDiscardRequestSchema,
+  [IPC_CHANNELS.workspaceOpenExternal]: workspaceOpenExternalRequestSchema
 });
 
 const responseSchemas = Object.freeze({
@@ -733,7 +745,8 @@ const responseSchemas = Object.freeze({
   [IPC_CHANNELS.autoSaveStage]: autoSaveStageResponseSchema,
   [IPC_CHANNELS.autoSaveRecover]: autoSaveRecoverResponseSchema,
   [IPC_CHANNELS.autoSaveList]: autoSaveListResponseSchema,
-  [IPC_CHANNELS.autoSaveDiscard]: autoSaveDiscardResponseSchema
+  [IPC_CHANNELS.autoSaveDiscard]: autoSaveDiscardResponseSchema,
+  [IPC_CHANNELS.workspaceOpenExternal]: workspaceOpenExternalResponseSchema
 });
 
 module.exports = {
