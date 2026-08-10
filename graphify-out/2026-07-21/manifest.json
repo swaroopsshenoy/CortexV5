@@ -1,0 +1,492 @@
+{
+  ".claude/mcp.json": {
+    "mtime": 1778400037.4116223,
+    "ast_hash": "7e649fbe9f697e27a291b6d4624550a2",
+    "semantic_hash": ""
+  },
+  ".copilot/mcp.json": {
+    "mtime": 1778400037.4086206,
+    "ast_hash": "7e649fbe9f697e27a291b6d4624550a2",
+    "semantic_hash": ""
+  },
+  ".gemini/antigravity/mcp_config.json": {
+    "mtime": 1784309811.9303124,
+    "ast_hash": "32fdd7f37ecec3724e3bee44fbf5ef7b",
+    "semantic_hash": ""
+  },
+  ".vscode/mcp.json": {
+    "mtime": 1778400037.410622,
+    "ast_hash": "7e649fbe9f697e27a291b6d4624550a2",
+    "semantic_hash": ""
+  },
+  ".vscode/settings.json": {
+    "mtime": 1779268209.3511028,
+    "ast_hash": "e114086411c60fd016cc50bf671208d5",
+    "semantic_hash": ""
+  },
+  "mcp/custom-cmake-server.py": {
+    "mtime": 1778399966.7250507,
+    "ast_hash": "672b1b043bf8e8a33987d4f11a6ea20a",
+    "semantic_hash": ""
+  },
+  "mcp/custom-shell-server.py": {
+    "mtime": 1778399960.6948936,
+    "ast_hash": "5155714cc19f62c2e0ff6f77fdf8942e",
+    "semantic_hash": ""
+  },
+  "mcp/generate-local-config.ps1": {
+    "mtime": 1778400004.561683,
+    "ast_hash": "6206175bb114aea190c6c7f6cb4586e6",
+    "semantic_hash": ""
+  },
+  "mcp/hosts/claude-code/mcp.json": {
+    "mtime": 1778399997.2018204,
+    "ast_hash": "0734ec5ace6c80523d380c81ff38d8d5",
+    "semantic_hash": ""
+  },
+  "mcp/hosts/copilot-cli/mcp.json": {
+    "mtime": 1778399987.6715984,
+    "ast_hash": "0734ec5ace6c80523d380c81ff38d8d5",
+    "semantic_hash": ""
+  },
+  "mcp/hosts/vscode/mcp.json": {
+    "mtime": 1778399992.6973698,
+    "ast_hash": "1a429988c08a8fa411b289326899264d",
+    "semantic_hash": ""
+  },
+  "mcp/mcp.example.json": {
+    "mtime": 1778400014.3658023,
+    "ast_hash": "5d8110b1ea478e5cd0c6fddefd41cd43",
+    "semantic_hash": ""
+  },
+  "mcp/perplexity-search-server.py": {
+    "mtime": 1778399970.91686,
+    "ast_hash": "df37968d71cc74bf134d47f15cc91113",
+    "semantic_hash": ""
+  },
+  "mcp/python-ml-server.py": {
+    "mtime": 1778399982.7109265,
+    "ast_hash": "22724b1710e9e99ed78bf5e80dc83451",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1783160033.786615,
+    "ast_hash": "32c1ff0d3de597f79ce5923c7409b664",
+    "semantic_hash": ""
+  },
+  "scripts/build_python.ps1": {
+    "mtime": 1781817327.4460282,
+    "ast_hash": "eb7deac9862135ad04a87606c8f15b30",
+    "semantic_hash": ""
+  },
+  "scripts/ml/build_dataset.py": {
+    "mtime": 1781816975.0525672,
+    "ast_hash": "ea298d02d49c1094086c8dde8d9bf935",
+    "semantic_hash": ""
+  },
+  "scripts/ml/generate_cpp_programs.py": {
+    "mtime": 1784189567.4344532,
+    "ast_hash": "8111942c68ebe43770e1cb29d4e97a09",
+    "semantic_hash": ""
+  },
+  "scripts/ml/train_optimization_model.py": {
+    "mtime": 1784193742.8334723,
+    "ast_hash": "58997f27549ceb044a9af0bde1744bbc",
+    "semantic_hash": ""
+  },
+  "scripts/ml/train_risk_model.py": {
+    "mtime": 1781277895.321676,
+    "ast_hash": "d76f58827ba7bf5298db99fd0351ed98",
+    "semantic_hash": ""
+  },
+  "scripts/run_optimization_model.py": {
+    "mtime": 1784209762.9868624,
+    "ast_hash": "52c474d8e66a7f99aa9f71f8637b529e",
+    "semantic_hash": ""
+  },
+  "src/electron/main/astAnalysisService.js": {
+    "mtime": 1779642409.8209178,
+    "ast_hash": "7171bca72afe4e8ae891a04d66f1fffb",
+    "semantic_hash": ""
+  },
+  "src/electron/main/astAnalysisService.test.js": {
+    "mtime": 1779642542.6145616,
+    "ast_hash": "1e539a9c6c66d0a14a97b6abee253519",
+    "semantic_hash": ""
+  },
+  "src/electron/main/autoSaveService.js": {
+    "mtime": 1781280315.062158,
+    "ast_hash": "59d244945463418bcb90b042abf02bf0",
+    "semantic_hash": ""
+  },
+  "src/electron/main/autoSaveService.test.js": {
+    "mtime": 1781815046.3574958,
+    "ast_hash": "ba53ff2896335da3d3d9478ca2318d84",
+    "semantic_hash": ""
+  },
+  "src/electron/main/benchmarkRunnerService.js": {
+    "mtime": 1779642064.2824814,
+    "ast_hash": "f632f48f8fdcf0c578a4853e0e56dabc",
+    "semantic_hash": ""
+  },
+  "src/electron/main/benchmarkRunnerService.test.js": {
+    "mtime": 1779642070.3613076,
+    "ast_hash": "6538603218b2fe20ca204e06e222b6a8",
+    "semantic_hash": ""
+  },
+  "src/electron/main/clangService.js": {
+    "mtime": 1781814883.332244,
+    "ast_hash": "dd1ee039d48c6078eb345d9b9226fbde",
+    "semantic_hash": ""
+  },
+  "src/electron/main/clangService.test.js": {
+    "mtime": 1781815236.8387578,
+    "ast_hash": "b57fa8e0e06a2e89a1e41a746f2c9f91",
+    "semantic_hash": ""
+  },
+  "src/electron/main/comparativeProfilingService.js": {
+    "mtime": 1779643343.8257961,
+    "ast_hash": "5f3093b199e29edaa2969e9c29a6efe3",
+    "semantic_hash": ""
+  },
+  "src/electron/main/comparativeProfilingService.test.js": {
+    "mtime": 1779643350.5010848,
+    "ast_hash": "ff65af2c57bf7f970b5719c456e4138e",
+    "semantic_hash": ""
+  },
+  "src/electron/main/errorExplanationService.js": {
+    "mtime": 1779040302.1692722,
+    "ast_hash": "77d1c4ab6318a6479fac58a61ef01a22",
+    "semantic_hash": ""
+  },
+  "src/electron/main/errorExplanationService.test.js": {
+    "mtime": 1779040327.810763,
+    "ast_hash": "d45dd53efff89420f0ac2118fb6c975c",
+    "semantic_hash": ""
+  },
+  "src/electron/main/executionSimulatorService.js": {
+    "mtime": 1779472678.6219904,
+    "ast_hash": "c0eb3f79464ff8092281ecadf8bb2a9b",
+    "semantic_hash": ""
+  },
+  "src/electron/main/executionSimulatorService.test.js": {
+    "mtime": 1779472725.9947717,
+    "ast_hash": "bf2593bc74b597824f2b12360afda9d3",
+    "semantic_hash": ""
+  },
+  "src/electron/main/integration/pipeline.test.js": {
+    "mtime": 1781815074.3541255,
+    "ast_hash": "d413a2a97cf7a68d116c0fc7d09afa01",
+    "semantic_hash": ""
+  },
+  "src/electron/main/integration/stability.test.js": {
+    "mtime": 1781815189.4243877,
+    "ast_hash": "3e5745c5d508191400cf50c0bdfc5f98",
+    "semantic_hash": ""
+  },
+  "src/electron/main/main.js": {
+    "mtime": 1784207950.2885406,
+    "ast_hash": "e1101e4a8d16eb0ce371d4b6c97778b7",
+    "semantic_hash": ""
+  },
+  "src/electron/main/nlpExplanationService.js": {
+    "mtime": 1781817113.0012875,
+    "ast_hash": "592d987dfa062cb6b9f24f070f63c835",
+    "semantic_hash": ""
+  },
+  "src/electron/main/nlpExplanationService.test.js": {
+    "mtime": 1781278801.8605235,
+    "ast_hash": "8d8897a70ceda2d1eb510dc1c70a6247",
+    "semantic_hash": ""
+  },
+  "src/electron/main/optimizationSuggestionService.js": {
+    "mtime": 1779112904.0812469,
+    "ast_hash": "a69529e57a5192237ba294b21a91d78a",
+    "semantic_hash": ""
+  },
+  "src/electron/main/optimizationSuggestionService.test.js": {
+    "mtime": 1779112879.2026486,
+    "ast_hash": "a8b621020a021e22a7d6c9192af8e33d",
+    "semantic_hash": ""
+  },
+  "src/electron/main/performanceRiskFeatures.js": {
+    "mtime": 1781277862.884451,
+    "ast_hash": "8697d9b5dc3a8d12a2246f494f4cbee8",
+    "semantic_hash": ""
+  },
+  "src/electron/main/performanceRiskFeatures.test.js": {
+    "mtime": 1781278041.752171,
+    "ast_hash": "6357f70cd0e6f18262e19a1537eab894",
+    "semantic_hash": ""
+  },
+  "src/electron/main/performanceRiskService.js": {
+    "mtime": 1781817078.6931148,
+    "ast_hash": "579a48f2e88a511b6384c678566fde2a",
+    "semantic_hash": ""
+  },
+  "src/electron/main/performanceRiskService.test.js": {
+    "mtime": 1781278047.6771922,
+    "ast_hash": "a842367aa5149d06b7b7bf3cc08dbe4d",
+    "semantic_hash": ""
+  },
+  "src/electron/main/profileHistoryService.js": {
+    "mtime": 1784186106.1340115,
+    "ast_hash": "cf2730026c7c19a0f2078d96d55101a6",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/ast_cindex_driver.py": {
+    "mtime": 1779043032.5121453,
+    "ast_hash": "35547a2f81080af9dd81c91e360c6b94",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/feature_spec.py": {
+    "mtime": 1781277875.9423094,
+    "ast_hash": "d365dc60908b41169dbf51928b94eaa7",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/nlp_refine_driver.py": {
+    "mtime": 1781278755.162261,
+    "ast_hash": "09a7e3737c9c8c8e028606acc8096dfb",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/performance_risk_driver.py": {
+    "mtime": 1781277901.2352865,
+    "ast_hash": "a2bc4b0e7e55bdd6fb00cd9a65577fb1",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/test_nlp_refine_driver.py": {
+    "mtime": 1781278803.4132087,
+    "ast_hash": "67eec86fa26645ba37849cea828224f3",
+    "semantic_hash": ""
+  },
+  "src/electron/main/py/test_performance_risk_driver.py": {
+    "mtime": 1781278051.593353,
+    "ast_hash": "35926d47b7ec685d942020e6dae790e4",
+    "semantic_hash": ""
+  },
+  "src/electron/main/reportService.js": {
+    "mtime": 1781857895.2671933,
+    "ast_hash": "0c01efd992e0b8d68b76bb89de6a6182",
+    "semantic_hash": ""
+  },
+  "src/electron/main/reportService.test.js": {
+    "mtime": 1781857859.7771719,
+    "ast_hash": "03c3b1fd8b082e6ad6000dd895114d3b",
+    "semantic_hash": ""
+  },
+  "src/electron/preload/preload.js": {
+    "mtime": 1784187943.389762,
+    "ast_hash": "64eddb8c4518b897434b25df30e2e800",
+    "semantic_hash": ""
+  },
+  "src/renderer/App.jsx": {
+    "mtime": 1784634278.0252483,
+    "ast_hash": "1871838319baa629133e5b1d9a14ea63",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/BenchmarkModal.jsx": {
+    "mtime": 1784185894.803733,
+    "ast_hash": "672f310d211bfc617ccc699e88cfe20e",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Editor/CppEditor.jsx": {
+    "mtime": 1784634249.4697964,
+    "ast_hash": "52cf4e6b365fc91e429e2ff79d08a367",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Editor/DiffViewer.jsx": {
+    "mtime": 1784209559.2646186,
+    "ast_hash": "299e783a52196eb00c72c3d261a7e31d",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Editor/cppCompletionProvider.js": {
+    "mtime": 1784633408.094063,
+    "ast_hash": "68e764c4abc51cb4964d70902e17bd43",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Editor/useEditorStore.js": {
+    "mtime": 1778761374.379812,
+    "ast_hash": "2dd58ab9e54fffd2c18d5b33cc1bada5",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/FileExplorer/FileExplorer.jsx": {
+    "mtime": 1783352654.790622,
+    "ast_hash": "f9330dd29bdd36e96bcda41f68348fe0",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/InspectorPane.jsx": {
+    "mtime": 1784186574.294219,
+    "ast_hash": "4597ed797c43d8fce13af2b48b999baf",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Resizer.jsx": {
+    "mtime": 1783271173.8390105,
+    "ast_hash": "a546cb669d5d03cd30ce123362b52e2a",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Terminal/TerminalPane.jsx": {
+    "mtime": 1784185379.604777,
+    "ast_hash": "93dc3b93e7f5324c09e7ca0789b78415",
+    "semantic_hash": ""
+  },
+  "src/renderer/ipc/client.js": {
+    "mtime": 1784187951.371035,
+    "ast_hash": "9f1db160d07ecd3a5cac7af23bd3d24c",
+    "semantic_hash": ""
+  },
+  "src/renderer/main.jsx": {
+    "mtime": 1778402406.4668605,
+    "ast_hash": "1502c374ec9aca5049c3c82aac6a68fd",
+    "semantic_hash": ""
+  },
+  "src/renderer/types/global.d.ts": {
+    "mtime": 1778411037.089274,
+    "ast_hash": "5449c74c343d66093f5a45e3765832f0",
+    "semantic_hash": ""
+  },
+  "src/shared/ipc/channels.js": {
+    "mtime": 1784187918.659292,
+    "ast_hash": "5c409405a74e2ebabf78c3b0ec22c5e3",
+    "semantic_hash": ""
+  },
+  "src/shared/ipc/contracts.d.ts": {
+    "mtime": 1781278783.48012,
+    "ast_hash": "148344b8aa974cce513bc10ca327f93e",
+    "semantic_hash": ""
+  },
+  "src/shared/ipc/schemas.js": {
+    "mtime": 1784207893.54187,
+    "ast_hash": "c7520de3307fa2ce410f534e3377035d",
+    "semantic_hash": ""
+  },
+  "vite.config.mjs": {
+    "mtime": 1783160022.9895098,
+    "ast_hash": "3cc8c1a49dd18fc5870a7c63d757d2a7",
+    "semantic_hash": ""
+  },
+  ".agents/AGENTS.md": {
+    "mtime": 1783154066.9971912,
+    "ast_hash": "cd28c236ff2eab224e8faa309fedcc40",
+    "semantic_hash": ""
+  },
+  ".agents/rules/graphify.md": {
+    "mtime": 1784309751.576205,
+    "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
+    "semantic_hash": ""
+  },
+  ".agents/workflows/graphify.md": {
+    "mtime": 1784309751.578287,
+    "ast_hash": "637776aa6f7496d069afe7520c845c8a",
+    "semantic_hash": ""
+  },
+  ".github/copilot-instructions.md": {
+    "mtime": 1778399228.3889637,
+    "ast_hash": "664baa398fa0fa64f335d067cc37752a",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1781533502.6671731,
+    "ast_hash": "49b93a40e49562d7eae917963fce156e",
+    "semantic_hash": ""
+  },
+  "handoff.md": {
+    "mtime": 1781817267.3581243,
+    "ast_hash": "119c7b40cb46c2c9c55506abef4d4fa4",
+    "semantic_hash": ""
+  },
+  "mcp/README.md": {
+    "mtime": 1778400018.1029763,
+    "ast_hash": "b286d13908d10b99e19f8e2cddbf7987",
+    "semantic_hash": ""
+  },
+  "mcp/requirements.txt": {
+    "mtime": 1778399954.0006826,
+    "ast_hash": "7cad5888ca47caae259eff6c37fc6b01",
+    "semantic_hash": ""
+  },
+  "requirements-build.txt": {
+    "mtime": 1781816552.4768212,
+    "ast_hash": "910e2bed241efea8a72421b95120939e",
+    "semantic_hash": ""
+  },
+  "skill/README.md": {
+    "mtime": 1778399807.9930434,
+    "ast_hash": "b4e31ab148c3c9e2758c2828ae55154a",
+    "semantic_hash": ""
+  },
+  "skill/clang-gcc-compilation-pipeline/SKILL.md": {
+    "mtime": 1778399818.9088738,
+    "ast_hash": "7d88914e7f54810a055b2525e667f9d8",
+    "semantic_hash": ""
+  },
+  "skill/context7-doc-research/SKILL.md": {
+    "mtime": 1778399848.029878,
+    "ast_hash": "ab512ba835d0e3551ca74803949fff0f",
+    "semantic_hash": ""
+  },
+  "skill/cpp-static-analysis-ast/SKILL.md": {
+    "mtime": 1778399822.1700861,
+    "ast_hash": "44ebae09447fbe838d17e7ea507ec43f",
+    "semantic_hash": ""
+  },
+  "skill/electron-desktop-framework/SKILL.md": {
+    "mtime": 1778399812.068719,
+    "ast_hash": "2e5896cb61f5c70b09e022778cd7ab50",
+    "semantic_hash": ""
+  },
+  "skill/electron-security-scaffold/SKILL.md": {
+    "mtime": 1778399842.1949396,
+    "ast_hash": "c101d55728a0c5f953456a2bc54800fe",
+    "semantic_hash": ""
+  },
+  "skill/full-pipeline-integration-master/SKILL.md": {
+    "mtime": 1778399836.4079728,
+    "ast_hash": "a3e0c6dcba9d29a3ff9929a599192196",
+    "semantic_hash": ""
+  },
+  "skill/monaco-cpp-ide/SKILL.md": {
+    "mtime": 1778399815.149907,
+    "ast_hash": "05bb13abd855ef9eef85253b8e1fa691",
+    "semantic_hash": ""
+  },
+  "skill/nlp-explanation-error-intelligence/SKILL.md": {
+    "mtime": 1778399830.4339697,
+    "ast_hash": "8a45713538224e8036ee600bb548acc2",
+    "semantic_hash": ""
+  },
+  "skill/optimization-engine/SKILL.md": {
+    "mtime": 1778399825.1919138,
+    "ast_hash": "d9cd4f826b4c1076caac13a68b13f0b2",
+    "semantic_hash": ""
+  },
+  "skill/performance-profiling-ml-predictor/SKILL.md": {
+    "mtime": 1778399827.9075983,
+    "ast_hash": "a5fec6b3d8b46179102743dff3f55c9c",
+    "semantic_hash": ""
+  },
+  "skill/playwright-webapp-testing/SKILL.md": {
+    "mtime": 1778399844.897589,
+    "ast_hash": "7a74cbd8823c4d36a3e73492684bf2cc",
+    "semantic_hash": ""
+  },
+  "skill/react-zustand-tailwind-ui/SKILL.md": {
+    "mtime": 1778399833.2308662,
+    "ast_hash": "6af30f60e2207172c870b18a7088d258",
+    "semantic_hash": ""
+  },
+  "skill/report-generation-pdf-export/SKILL.md": {
+    "mtime": 1778399839.3956656,
+    "ast_hash": "fce74056d4149b142e3bf9c6d6657cb0",
+    "semantic_hash": ""
+  },
+  "src/renderer/index.html": {
+    "mtime": 1778402395.1396594,
+    "ast_hash": "dc231aae428f47f7d2fce0f5ea37f5ee",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/Editor/cppFormattingProvider.js": {
+    "mtime": 1784634554.0616899,
+    "ast_hash": "84941c47411fdc3d14252bcdd289ad63",
+    "semantic_hash": ""
+  }
+}

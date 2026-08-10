@@ -305,6 +305,7 @@ body,
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  flex: 1;
 }
 
 .inspector-header {
@@ -618,4 +619,22 @@ body,
 }
 .topbar [data-tooltip]:hover::after {
   transform: translateX(-50%) translateY(8px);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+  font-family: inherit;
+}
+
+.toggle-label:hover {
+  background: #334155;
 }

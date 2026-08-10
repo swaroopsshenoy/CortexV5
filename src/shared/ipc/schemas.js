@@ -41,9 +41,9 @@ const analyzeComplexityRequestSchema = z
 
 const optimizeRequestSchema = z
   .object({
-    scriptPath: z.string().min(1).optional(),
     sourcePath: z.string().min(1).optional(),
-    args: z.array(z.string()).optional()
+    code: z.string().optional(),
+    skipMl: z.boolean().optional()
   })
   .strict();
 
@@ -282,6 +282,27 @@ const analyzeResultSchema = processResultSchema
   .extend({
     performanceRisk: performanceRiskSchema.optional(),
     nlpExplanations: z.array(nlpExplanationSchema).optional()
+  })
+  .strict();
+
+const optimizeResultSchema = z
+  .object({
+    status: z.enum(["ok", "error"]),
+    optimizedCode: z.string().optional(),
+    suggestions: z.record(z.unknown()).optional(),
+    algorithmRecommendations: z
+      .array(
+        z.object({
+          name: z.string(),
+          score: z.number(),
+          complexity: z.string(),
+          use_when: z.string(),
+          template: z.string(),
+          notes: z.string()
+        })
+      )
+      .optional(),
+    error: z.string().optional()
   })
   .strict();
 
@@ -720,7 +741,7 @@ const responseSchemas = Object.freeze({
   [IPC_CHANNELS.compile]: compileResultSchema,
   [IPC_CHANNELS.run]: processResultSchema,
   [IPC_CHANNELS.analyze]: analyzeResultSchema,
-  [IPC_CHANNELS.optimize]: processResultSchema,
+  [IPC_CHANNELS.optimize]: optimizeResultSchema,
   [IPC_CHANNELS.simulate]: simulationResultSchema,
   [IPC_CHANNELS.benchmark]: benchmarkResultSchema,
   [IPC_CHANNELS.analyzeComplexity]: analyzeResultSchema,

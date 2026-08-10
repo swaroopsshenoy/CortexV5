@@ -13,6 +13,8 @@ const { createPerformanceRiskService } = require("./performanceRiskService");
 const { createNlpExplanationService } = require("./nlpExplanationService");
 const { createReportService } = require("./reportService");
 const { createAutoSaveService } = require("./autoSaveService");
+const { createOptimizationSuggestionService } = require("./optimizationSuggestionService");
+const { createAlgorithmRecommendationService } = require("./algorithmRecommendationService");
 const {
   IPC_CHANNELS,
   IPC_CHANNEL_SET,
@@ -60,6 +62,8 @@ let performanceRiskService = null;
 let nlpExplanationService = null;
 let reportService = null;
 let autoSaveService = null;
+let optimizationSuggestionService = null;
+let algorithmRecommendationService = null;
 const MAX_TERMINAL_HISTORY_ENTRIES = 500;
 const MAX_PROFILE_HISTORY_ENTRIES = 200;
 
@@ -156,6 +160,24 @@ function getAutoSaveService() {
     });
   }
   return autoSaveService;
+}
+
+function getOptimizationSuggestionService() {
+  if (!optimizationSuggestionService) {
+    optimizationSuggestionService = createOptimizationSuggestionService({
+      databaseRoot: path.join(PROJECT_ROOT, "resources", "optimization_rule_database")
+    });
+  }
+  return optimizationSuggestionService;
+}
+
+function getAlgorithmRecommendationService() {
+  if (!algorithmRecommendationService) {
+    algorithmRecommendationService = createAlgorithmRecommendationService({
+      databasePath: path.join(PROJECT_ROOT, "resources", "algorithms_db.json")
+    });
+  }
+  return algorithmRecommendationService;
 }
 
 async function analyzeWithPerformanceRisk(payload) {
@@ -604,13 +626,47 @@ registerIpcHandler(IPC_CHANNELS.analyze, async (payload) => {
 });
 
 registerIpcHandler(IPC_CHANNELS.optimize, async (payload) => {
-  const scriptPath = toProjectPath(payload.scriptPath ?? "scripts\\optimize.py");
-  const sourcePath = toProjectPath(payload.sourcePath ?? "workspace\\main.cpp");
-  const args = payload.args ?? [];
+  const sourcePath = payload.sourcePath ? toProjectPath(payload.sourcePath) : toProjectPath("workspace\\main.cpp");
+  if (typeof payload.code === "string") {
+    await fs.mkdir(path.dirname(sourcePath), { recursive: true });
+    await fs.writeFile(sourcePath, payload.code, "utf8");
+  }
 
-  return spawnProcess("python", [scriptPath, sourcePath, ...args], {
-    cwd: PROJECT_ROOT
+  // Get AST features
+  const analyzeResult = await getAstAnalysisService().analyze({
+    sourcePath: payload.sourcePath,
+    code: payload.code
   });
+
+  // Get rule-based suggestions
+  const suggestions = await getOptimizationSuggestionService().generate({
+    ...analyzeResult,
+    sourceContent: payload.code,
+    sourcePath: payload.sourcePath
+  });
+
+  // Get algorithm recommendations
+  const algorithmRecommendations = await getAlgorithmRecommendationService().recommend(payload.code);
+
+  // Run ML model
+  let mlResult;
+  if (payload.skipMl) {
+    mlResult = { code: 0, stdout: payload.code };
+  } else {
+    const scriptPath = toProjectPath("scripts\\run_optimization_model.py");
+    mlResult = await spawnProcess("python", [scriptPath], {
+      cwd: PROJECT_ROOT,
+      input: payload.code
+    });
+  }
+
+  return {
+    status: mlResult.code === 0 ? "ok" : "error",
+    optimizedCode: mlResult.code === 0 ? mlResult.stdout : undefined,
+    suggestions: suggestions,
+    algorithmRecommendations: algorithmRecommendations,
+    error: mlResult.code !== 0 ? (mlResult.stderr || mlResult.stdout) : undefined
+  };
 });
 
 registerIpcHandler(IPC_CHANNELS.simulate, async (payload) => {

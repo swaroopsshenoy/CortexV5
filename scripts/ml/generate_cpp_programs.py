@@ -1,1643 +1,1009 @@
 #!/usr/bin/env python3
 """
-Generate 550 hand-crafted C++ programs across 12 categories for ML training.
-Each program is a valid, self-contained C++ file exhibiting real performance
-characteristics (loops, recursion, STL, pointers, dynamic allocation).
-
-Usage:
-    python scripts/ml/generate_cpp_programs.py
-    python scripts/ml/generate_cpp_programs.py --out-dir resources/ml_performance_dataset/programs
+Generate a JSONL dataset of unoptimized vs optimized C++ programs.
+Used for fine-tuning LLMs on code optimization tasks.
 """
 
-from __future__ import annotations
+import json
 import argparse
 from pathlib import Path
-from textwrap import dedent
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUT = ROOT / "resources" / "ml_performance_dataset" / "programs"
+DEFAULT_OUT = ROOT / "resources" / "ml_performance_dataset" / "dataset.jsonl"
 
-# ---------------------------------------------------------------------------
-# Template helpers
-# ---------------------------------------------------------------------------
-
-HEADER = '#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <cmath>\n#include <climits>\n#include <map>\n#include <set>\n#include <queue>\n#include <stack>\n#include <functional>\n#include <numeric>\nusing namespace std;\n\n'
+HEADER = '#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <cmath>\n#include <climits>\n#include <map>\n#include <set>\n#include <queue>\n#include <stack>\nusing namespace std;\n\n'
 
 def prog(body: str) -> str:
     return HEADER + body
 
-
 # ============================================================
-# CATEGORY 1: Sorting Algorithms (50 programs)
+# Algorithmic Optimizations
 # ============================================================
 
-def sorting_programs() -> list[tuple[str, str]]:
+def algorithmic_programs():
     programs = []
-
-    # Bubble sort variants
-    for i in range(1, 9):
-        n = 10 * i
-        programs.append((f"bubble_sort_{i:02d}", prog(f"""
-void bubbleSort(vector<int>& arr) {{
+    
+    # 1. Two Pointers (Two Sum on sorted array)
+    for i in range(1, 10):
+        n = 10 + i * 5
+        unopt = prog(f"""
+void twoSum(const vector<int>& arr, int target) {{
     int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {{
-        for (int j = 0; j < n - i - 1; j++) {{
-            if (arr[j] > arr[j + 1]) {{
-                swap(arr[j], arr[j + 1]);
+    for (int i = 0; i < n; i++) {{
+        for (int j = i + 1; j < n; j++) {{
+            if (arr[i] + arr[j] == target) {{
+                cout << i << " " << j << endl;
+                return;
             }}
         }}
     }}
 }}
 int main() {{
     vector<int> arr({n});
-    iota(arr.begin(), arr.end(), 0);
-    reverse(arr.begin(), arr.end());
-    bubbleSort(arr);
-    for (int x : arr) cout << x << " ";
+    for(int i=0; i<{n}; i++) arr[i] = i * 2;
+    twoSum(arr, {n});
     return 0;
 }}
-""")))
-
-    # Selection sort
-    for i in range(1, 6):
-        programs.append((f"selection_sort_{i:02d}", prog(f"""
-void selectionSort(vector<int>& arr) {{
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {{
-        int minIdx = i;
-        for (int j = i + 1; j < n; j++) {{
-            if (arr[j] < arr[minIdx]) minIdx = j;
-        }}
-        swap(arr[i], arr[minIdx]);
-    }}
-}}
-int main() {{
-    vector<int> arr = {{9, 5, 2, 7, 1, 8, 3, 6, 4, {i * 10}}};
-    selectionSort(arr);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    # Insertion sort
-    for i in range(1, 6):
-        programs.append((f"insertion_sort_{i:02d}", prog(f"""
-void insertionSort(vector<int>& arr) {{
-    int n = arr.size();
-    for (int i = 1; i < n; i++) {{
-        int key = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j] > key) {{
-            arr[j + 1] = arr[j];
-            j--;
-        }}
-        arr[j + 1] = key;
-    }}
-}}
-int main() {{
-    vector<int> arr({i + 5});
-    iota(arr.rbegin(), arr.rend(), 0);
-    insertionSort(arr);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    # Merge sort
-    for i in range(1, 8):
-        programs.append((f"merge_sort_{i:02d}", prog(f"""
-void merge(vector<int>& arr, int l, int m, int r) {{
-    vector<int> left(arr.begin() + l, arr.begin() + m + 1);
-    vector<int> right(arr.begin() + m + 1, arr.begin() + r + 1);
-    int i = 0, j = 0, k = l;
-    while (i < (int)left.size() && j < (int)right.size())
-        arr[k++] = (left[i] <= right[j]) ? left[i++] : right[j++];
-    while (i < (int)left.size()) arr[k++] = left[i++];
-    while (j < (int)right.size()) arr[k++] = right[j++];
-}}
-void mergeSort(vector<int>& arr, int l, int r) {{
-    if (l < r) {{
-        int m = l + (r - l) / 2;
-        mergeSort(arr, l, m);
-        mergeSort(arr, m + 1, r);
-        merge(arr, l, m, r);
-    }}
-}}
-int main() {{
-    vector<int> arr({4 + i * 3});
-    iota(arr.rbegin(), arr.rend(), 0);
-    mergeSort(arr, 0, arr.size() - 1);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    # Quick sort
-    for i in range(1, 7):
-        programs.append((f"quick_sort_{i:02d}", prog(f"""
-int partition(vector<int>& arr, int low, int high) {{
-    int pivot = arr[high];
-    int i = low - 1;
-    for (int j = low; j < high; j++) {{
-        if (arr[j] < pivot) swap(arr[++i], arr[j]);
-    }}
-    swap(arr[i + 1], arr[high]);
-    return i + 1;
-}}
-void quickSort(vector<int>& arr, int low, int high) {{
-    if (low < high) {{
-        int pi = partition(arr, low, high);
-        quickSort(arr, low, pi - 1);
-        quickSort(arr, pi + 1, high);
-    }}
-}}
-int main() {{
-    vector<int> arr({5 + i * 4});
-    iota(arr.rbegin(), arr.rend(), 1);
-    quickSort(arr, 0, arr.size() - 1);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    # Heap sort
-    for i in range(1, 6):
-        programs.append((f"heap_sort_{i:02d}", prog(f"""
-void heapify(vector<int>& arr, int n, int i) {{
-    int largest = i, l = 2 * i + 1, r = 2 * i + 2;
-    if (l < n && arr[l] > arr[largest]) largest = l;
-    if (r < n && arr[r] > arr[largest]) largest = r;
-    if (largest != i) {{
-        swap(arr[i], arr[largest]);
-        heapify(arr, n, largest);
-    }}
-}}
-void heapSort(vector<int>& arr) {{
-    int n = arr.size();
-    for (int i = n / 2 - 1; i >= 0; i--) heapify(arr, n, i);
-    for (int i = n - 1; i > 0; i--) {{
-        swap(arr[0], arr[i]);
-        heapify(arr, i, 0);
-    }}
-}}
-int main() {{
-    vector<int> arr({6 + i * 3});
-    iota(arr.rbegin(), arr.rend(), 1);
-    heapSort(arr);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    # STL sort + counting sort + radix sort
-    for i in range(1, 8):
-        programs.append((f"stl_counting_sort_{i:02d}", prog(f"""
-void countingSort(vector<int>& arr, int maxVal) {{
-    vector<int> count(maxVal + 1, 0);
-    for (int x : arr) count[x]++;
-    int idx = 0;
-    for (int i = 0; i <= maxVal; i++)
-        while (count[i]-- > 0) arr[idx++] = i;
-}}
-int main() {{
-    vector<int> arr = {{{", ".join(str((j * 7 + i * 3) % 20) for j in range(10 + i))}}};
-    int maxVal = *max_element(arr.begin(), arr.end());
-    countingSort(arr, maxVal);
-    for (int x : arr) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 2: Searching Algorithms (50 programs)
-# ============================================================
-
-def searching_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    # Binary search variants
-    for i in range(1, 11):
-        programs.append((f"binary_search_{i:02d}", prog(f"""
-int binarySearch(const vector<int>& arr, int target) {{
-    int low = 0, high = arr.size() - 1;
-    while (low <= high) {{
-        int mid = low + (high - low) / 2;
-        if (arr[mid] == target) return mid;
-        if (arr[mid] < target) low = mid + 1;
-        else high = mid - 1;
-    }}
-    return -1;
-}}
-int main() {{
-    vector<int> arr({10 + i * 5});
-    iota(arr.begin(), arr.end(), 0);
-    int target = {i * 3};
-    int result = binarySearch(arr, target);
-    cout << "Found at: " << result << endl;
-    return 0;
-}}
-""")))
-
-    # Linear search
-    for i in range(1, 8):
-        programs.append((f"linear_search_{i:02d}", prog(f"""
-int linearSearch(const vector<int>& arr, int target) {{
-    for (int i = 0; i < (int)arr.size(); i++) {{
-        if (arr[i] == target) return i;
-    }}
-    return -1;
-}}
-int main() {{
-    vector<int> arr({8 + i * 4});
-    iota(arr.begin(), arr.end(), 1);
-    cout << linearSearch(arr, {i * 2}) << endl;
-    return 0;
-}}
-""")))
-
-    # Ternary search
-    for i in range(1, 6):
-        programs.append((f"ternary_search_{i:02d}", prog(f"""
-int ternarySearch(const vector<int>& arr, int l, int r, int target) {{
-    if (r >= l) {{
-        int mid1 = l + (r - l) / 3;
-        int mid2 = r - (r - l) / 3;
-        if (arr[mid1] == target) return mid1;
-        if (arr[mid2] == target) return mid2;
-        if (target < arr[mid1]) return ternarySearch(arr, l, mid1 - 1, target);
-        if (target > arr[mid2]) return ternarySearch(arr, mid2 + 1, r, target);
-        return ternarySearch(arr, mid1 + 1, mid2 - 1, target);
-    }}
-    return -1;
-}}
-int main() {{
-    vector<int> arr({10 + i * 5});
-    iota(arr.begin(), arr.end(), 0);
-    cout << ternarySearch(arr, 0, arr.size()-1, {i * 4}) << endl;
-    return 0;
-}}
-""")))
-
-    # Jump search
-    for i in range(1, 6):
-        programs.append((f"jump_search_{i:02d}", prog(f"""
-int jumpSearch(const vector<int>& arr, int target) {{
-    int n = arr.size();
-    int step = (int)sqrt((double)n);
-    int prev = 0;
-    while (arr[min(step, n) - 1] < target) {{
-        prev = step;
-        step += (int)sqrt((double)n);
-        if (prev >= n) return -1;
-    }}
-    while (arr[prev] < target) {{
-        prev++;
-        if (prev == min(step, n)) return -1;
-    }}
-    return arr[prev] == target ? prev : -1;
-}}
-int main() {{
-    vector<int> arr({15 + i * 5});
-    iota(arr.begin(), arr.end(), 0);
-    cout << jumpSearch(arr, {i * 3}) << endl;
-    return 0;
-}}
-""")))
-
-    # Interpolation search
-    for i in range(1, 6):
-        programs.append((f"interpolation_search_{i:02d}", prog(f"""
-int interpolationSearch(const vector<int>& arr, int target) {{
-    int lo = 0, hi = arr.size() - 1;
-    while (lo <= hi && target >= arr[lo] && target <= arr[hi]) {{
-        if (lo == hi) return arr[lo] == target ? lo : -1;
-        int pos = lo + ((double)(hi - lo) / (arr[hi] - arr[lo])) * (target - arr[lo]);
-        if (arr[pos] == target) return pos;
-        if (arr[pos] < target) lo = pos + 1;
-        else hi = pos - 1;
-    }}
-    return -1;
-}}
-int main() {{
-    vector<int> arr({20 + i * 5});
-    iota(arr.begin(), arr.end(), 0);
-    cout << interpolationSearch(arr, {i * 4}) << endl;
-    return 0;
-}}
-""")))
-
-    # Exponential search
-    for i in range(1, 6):
-        programs.append((f"exponential_search_{i:02d}", prog(f"""
-int bsearch(const vector<int>& arr, int l, int r, int x) {{
-    while (l <= r) {{
-        int m = l + (r - l) / 2;
-        if (arr[m] == x) return m;
-        arr[m] < x ? l = m + 1 : (r = m - 1);
-    }}
-    return -1;
-}}
-int exponentialSearch(const vector<int>& arr, int x) {{
-    if (arr[0] == x) return 0;
-    int i = 1;
-    while (i < (int)arr.size() && arr[i] <= x) i *= 2;
-    return bsearch(arr, i / 2, min(i, (int)arr.size() - 1), x);
-}}
-int main() {{
-    vector<int> arr({20 + i * 4});
-    iota(arr.begin(), arr.end(), 0);
-    cout << exponentialSearch(arr, {i * 5}) << endl;
-    return 0;
-}}
-""")))
-
-    # Hash-based search
-    for i in range(1, 9):
-        programs.append((f"hash_search_{i:02d}", prog(f"""
-int main() {{
-    map<int, int> hashMap;
-    vector<int> data({10 + i * 3});
-    iota(data.begin(), data.end(), {i});
-    for (int i = 0; i < (int)data.size(); i++) hashMap[data[i]] = i;
-    int target = {i * 4 + 2};
-    auto it = hashMap.find(target);
-    if (it != hashMap.end()) cout << "Found at index " << it->second << endl;
-    else cout << "Not found" << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 3: Graph Algorithms (75 programs)
-# ============================================================
-
-def graph_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    # BFS variants
-    for i in range(1, 11):
-        v = 4 + i
-        programs.append((f"bfs_{i:02d}", prog(f"""
-void bfs(vector<vector<int>>& adj, int start, int V) {{
-    vector<bool> visited(V, false);
-    queue<int> q;
-    visited[start] = true;
-    q.push(start);
-    while (!q.empty()) {{
-        int node = q.front(); q.pop();
-        cout << node << " ";
-        for (int neighbor : adj[node]) {{
-            if (!visited[neighbor]) {{
-                visited[neighbor] = true;
-                q.push(neighbor);
-            }}
+""")
+        opt = prog(f"""
+void twoSum(const vector<int>& arr, int target) {{
+    int left = 0, right = arr.size() - 1;
+    while (left < right) {{
+        int sum = arr[left] + arr[right];
+        if (sum == target) {{
+            cout << left << " " << right << endl;
+            return;
+        }} else if (sum < target) {{
+            left++;
+        }} else {{
+            right--;
         }}
     }}
 }}
 int main() {{
-    int V = {v};
-    vector<vector<int>> adj(V);
-    for (int i = 0; i < V - 1; i++) {{ adj[i].push_back(i+1); adj[i+1].push_back(i); }}
-    bfs(adj, 0, V);
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = i * 2;
+    twoSum(arr, {n});
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"two_pointers_{i:02d}", "category": "algorithmic", "subcategory": "two_pointers", "unoptimized": unopt, "optimized": opt})
 
-    # DFS variants
-    for i in range(1, 11):
-        v = 4 + i
-        programs.append((f"dfs_{i:02d}", prog(f"""
-void dfs(vector<vector<int>>& adj, vector<bool>& visited, int node) {{
-    visited[node] = true;
-    cout << node << " ";
-    for (int neighbor : adj[node]) {{
-        if (!visited[neighbor]) dfs(adj, visited, neighbor);
-    }}
-}}
-int main() {{
-    int V = {v};
-    vector<vector<int>> adj(V);
-    for (int i = 0; i < V - 1; i++) {{ adj[i].push_back(i+1); adj[i+1].push_back(i); }}
-    vector<bool> visited(V, false);
-    dfs(adj, visited, 0);
-    return 0;
-}}
-""")))
-
-    # Dijkstra
-    for i in range(1, 9):
-        v = 4 + i
-        programs.append((f"dijkstra_{i:02d}", prog(f"""
-void dijkstra(vector<vector<pair<int,int>>>& adj, int src, int V) {{
-    vector<int> dist(V, INT_MAX);
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
-    dist[src] = 0;
-    pq.push({{0, src}});
-    while (!pq.empty()) {{
-        auto [d, u] = pq.top(); pq.pop();
-        if (d > dist[u]) continue;
-        for (auto [w, v] : adj[u]) {{
-            if (dist[u] + w < dist[v]) {{
-                dist[v] = dist[u] + w;
-                pq.push({{dist[v], v}});
-            }}
-        }}
-    }}
-    for (int i = 0; i < V; i++) cout << "Dist[" << i << "]=" << dist[i] << " ";
-}}
-int main() {{
-    int V = {v};
-    vector<vector<pair<int,int>>> adj(V);
-    for (int i = 0; i < V-1; i++) {{
-        adj[i].push_back({{{i % 5 + 1}, i+1}});
-        adj[i+1].push_back({{{i % 5 + 1}, i}});
-    }}
-    dijkstra(adj, 0, V);
-    return 0;
-}}
-""")))
-
-    # Bellman-Ford
-    for i in range(1, 7):
-        v = 4 + i
-        programs.append((f"bellman_ford_{i:02d}", prog(f"""
-struct Edge {{ int u, v, w; }};
-void bellmanFord(vector<Edge>& edges, int V, int src) {{
-    vector<int> dist(V, INT_MAX);
-    dist[src] = 0;
-    for (int i = 0; i < V - 1; i++) {{
-        for (auto& e : edges) {{
-            if (dist[e.u] != INT_MAX && dist[e.u] + e.w < dist[e.v])
-                dist[e.v] = dist[e.u] + e.w;
-        }}
-    }}
-    for (int i = 0; i < V; i++) cout << dist[i] << " ";
-}}
-int main() {{
-    int V = {v};
-    vector<Edge> edges;
-    for (int i = 0; i < V-1; i++) edges.push_back({{i, i+1, {i % 4 + 1}}});
-    bellmanFord(edges, V, 0);
-    return 0;
-}}
-""")))
-
-    # Floyd-Warshall
-    for i in range(1, 7):
-        v = 3 + i
-        programs.append((f"floyd_warshall_{i:02d}", prog(f"""
-void floydWarshall(vector<vector<int>>& dist, int V) {{
-    for (int k = 0; k < V; k++)
-        for (int i = 0; i < V; i++)
-            for (int j = 0; j < V; j++)
-                if (dist[i][k] != INT_MAX && dist[k][j] != INT_MAX)
-                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
-}}
-int main() {{
-    int V = {v};
-    vector<vector<int>> dist(V, vector<int>(V, INT_MAX));
-    for (int i = 0; i < V; i++) dist[i][i] = 0;
-    for (int i = 0; i < V-1; i++) {{ dist[i][i+1] = {i % 5 + 1}; dist[i+1][i] = {i % 5 + 1}; }}
-    floydWarshall(dist, V);
-    for (auto& row : dist) {{ for (int x : row) cout << (x == INT_MAX ? -1 : x) << " "; cout << endl; }}
-    return 0;
-}}
-""")))
-
-    # Topological sort + cycle detection + Kruskal + Prim
-    for i in range(1, 8):
-        v = 4 + i
-        programs.append((f"topological_sort_{i:02d}", prog(f"""
-void topoHelper(int v, vector<vector<int>>& adj, vector<bool>& visited, stack<int>& st) {{
-    visited[v] = true;
-    for (int u : adj[v]) if (!visited[u]) topoHelper(u, adj, visited, st);
-    st.push(v);
-}}
-void topologicalSort(int V, vector<vector<int>>& adj) {{
-    vector<bool> visited(V, false);
-    stack<int> st;
-    for (int i = 0; i < V; i++) if (!visited[i]) topoHelper(i, adj, visited, st);
-    while (!st.empty()) {{ cout << st.top() << " "; st.pop(); }}
-}}
-int main() {{
-    int V = {v};
-    vector<vector<int>> adj(V);
-    for (int i = 0; i < V-1; i++) adj[i].push_back(i+1);
-    topologicalSort(V, adj);
-    return 0;
-}}
-""")))
-
-    for i in range(1, 8):
-        v = 4 + i
-        programs.append((f"kruskal_{i:02d}", prog(f"""
-struct Edge {{ int u, v, w; bool operator<(const Edge& o) const {{ return w < o.w; }} }};
-struct DSU {{
-    vector<int> p, rank_;
-    DSU(int n) : p(n), rank_(n, 0) {{ iota(p.begin(), p.end(), 0); }}
-    int find(int x) {{ return p[x] == x ? x : p[x] = find(p[x]); }}
-    bool unite(int a, int b) {{
-        a = find(a); b = find(b);
-        if (a == b) return false;
-        if (rank_[a] < rank_[b]) swap(a, b);
-        p[b] = a;
-        if (rank_[a] == rank_[b]) rank_[a]++;
-        return true;
-    }}
-}};
-int main() {{
-    int V = {v};
-    vector<Edge> edges;
-    for (int i = 0; i < V-1; i++) edges.push_back({{i, i+1, {i % 7 + 1}}});
-    sort(edges.begin(), edges.end());
-    DSU dsu(V);
-    int mstCost = 0;
-    for (auto& e : edges) if (dsu.unite(e.u, e.v)) mstCost += e.w;
-    cout << "MST cost: " << mstCost << endl;
-    return 0;
-}}
-""")))
-
+    # 1b. Two Pointers (Container with Most Water / maxWater)
     for i in range(1, 10):
-        v = 4 + i
-        programs.append((f"prim_{i:02d}", prog(f"""
-void prim(vector<vector<pair<int,int>>>& adj, int V) {{
-    vector<int> key(V, INT_MAX);
-    vector<bool> inMST(V, false);
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
-    key[0] = 0;
-    pq.push({{0, 0}});
-    int total = 0;
-    while (!pq.empty()) {{
-        auto [k, u] = pq.top(); pq.pop();
-        if (inMST[u]) continue;
-        inMST[u] = true;
-        total += k;
-        for (auto [w, v] : adj[u]) {{
-            if (!inMST[v] && w < key[v]) {{ key[v] = w; pq.push({{w, v}}); }}
+        n = 5 + i
+        arr_vals = ", ".join(str((idx * 3 + 2) % 10 + 1) for idx in range(n))
+        unopt = prog(f"""
+int maxWater(vector<int> &arr) {{
+    int n = arr.size();
+    int res = 0;
+    for (int i = 0; i < n; i++) {{
+        for (int j = i + 1; j < n; j++) {{
+            int amount = min(arr[i], arr[j]) * (j - i);
+            res = max(amount, res);
         }}
     }}
-    cout << "MST weight: " << total << endl;
+    return res;
 }}
 int main() {{
-    int V = {v};
-    vector<vector<pair<int,int>>> adj(V);
-    for (int i = 0; i < V-1; i++) {{
-        adj[i].push_back({{{i % 6 + 1}, i+1}});
-        adj[i+1].push_back({{{i % 6 + 1}, i}});
+    vector<int> arr = {{{arr_vals}}};
+    cout << maxWater(arr);
+    return 0;
+}}
+""")
+        opt = prog(f"""
+int maxWater(vector<int> &arr) {{
+    int left = 0, right = arr.size() - 1;
+    int res = 0;
+    while (left < right) {{
+        int height = min(arr[left], arr[right]);
+        int amount = height * (right - left);
+        res = max(res, amount);
+        if (arr[left] < arr[right]) {{
+            left++;
+        }} else {{
+            right--;
+        }}
     }}
-    prim(adj, V);
-    return 0;
-}}
-""")))
-
-    return programs[:75]
-
-
-# ============================================================
-# CATEGORY 4: Dynamic Programming (75 programs)
-# ============================================================
-
-def dp_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    # Fibonacci DP
-    for i in range(1, 11):
-        n = 10 + i * 3
-        programs.append((f"fibonacci_dp_{i:02d}", prog(f"""
-long long fib(int n) {{
-    if (n <= 1) return n;
-    vector<long long> dp(n + 1);
-    dp[0] = 0; dp[1] = 1;
-    for (int i = 2; i <= n; i++) dp[i] = dp[i-1] + dp[i-2];
-    return dp[n];
+    return res;
 }}
 int main() {{
-    for (int i = 0; i <= {n}; i++) cout << fib(i) << " ";
+    vector<int> arr = {{{arr_vals}}};
+    cout << maxWater(arr);
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"max_water_{i:02d}", "category": "algorithmic", "subcategory": "two_pointers", "unoptimized": unopt, "optimized": opt})
 
-    # 0/1 Knapsack
-    for i in range(1, 9):
-        n = 3 + i
-        w = 10 + i * 5
-        programs.append((f"knapsack_{i:02d}", prog(f"""
-int knapsack(int W, vector<int>& wt, vector<int>& val, int n) {{
+    # 2. Greedy (Activity Selection)
+    for i in range(1, 10):
+        unopt = prog("""
+struct Activity { int start, finish; };
+int maxActivities(vector<Activity>& arr) {
+    int n = arr.size();
+    int maxCount = 0;
+    for (int i = 0; i < (1 << n); i++) {
+        int count = 0;
+        int lastFinish = -1;
+        bool valid = true;
+        for (int j = 0; j < n; j++) {
+            if (i & (1 << j)) {
+                if (arr[j].start < lastFinish) { valid = false; break; }
+                lastFinish = arr[j].finish;
+                count++;
+            }
+        }
+        if (valid && count > maxCount) maxCount = count;
+    }
+    return maxCount;
+}
+int main() {
+    vector<Activity> arr = {{1, 2}, {3, 4}, {0, 6}, {5, 7}, {8, 9}, {5, 9}};
+    cout << maxActivities(arr) << endl;
+    return 0;
+}
+""")
+        opt = prog("""
+struct Activity { int start, finish; };
+bool compareActivity(Activity s1, Activity s2) { return (s1.finish < s2.finish); }
+int maxActivities(vector<Activity>& arr) {
+    sort(arr.begin(), arr.end(), compareActivity);
+    int n = arr.size();
+    int count = 1;
+    int i = 0;
+    for (int j = 1; j < n; j++) {
+        if (arr[j].start >= arr[i].finish) {
+            count++;
+            i = j;
+        }
+    }
+    return count;
+}
+int main() {
+    vector<Activity> arr = {{1, 2}, {3, 4}, {0, 6}, {5, 7}, {8, 9}, {5, 9}};
+    cout << maxActivities(arr) << endl;
+    return 0;
+}
+""")
+        programs.append({"name": f"greedy_activity_{i:02d}", "category": "algorithmic", "subcategory": "greedy", "unoptimized": unopt, "optimized": opt})
+
+    # 3. Knapsack
+    for i in range(1, 10):
+        unopt = prog("""
+int knapsackRec(int W, const vector<int>& wt, const vector<int>& val, int n) {
+    if (n == 0 || W == 0) return 0;
+    if (wt[n - 1] > W) return knapsackRec(W, wt, val, n - 1);
+    else return max(val[n - 1] + knapsackRec(W - wt[n - 1], wt, val, n - 1),
+                    knapsackRec(W, wt, val, n - 1));
+}
+int main() {
+    vector<int> val = {60, 100, 120};
+    vector<int> wt = {10, 20, 30};
+    int W = 50;
+    cout << knapsackRec(W, wt, val, val.size()) << endl;
+    return 0;
+}
+""")
+        opt = prog("""
+int knapsackDP(int W, const vector<int>& wt, const vector<int>& val, int n) {
     vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
-    for (int i = 1; i <= n; i++) {{
-        for (int w = 0; w <= W; w++) {{
-            dp[i][w] = dp[i-1][w];
-            if (wt[i-1] <= w) dp[i][w] = max(dp[i][w], dp[i-1][w - wt[i-1]] + val[i-1]);
+    for (int i = 1; i <= n; i++) {
+        for (int w = 0; w <= W; w++) {
+            if (wt[i - 1] <= w) dp[i][w] = max(val[i - 1] + dp[i - 1][w - wt[i - 1]], dp[i - 1][w]);
+            else dp[i][w] = dp[i - 1][w];
+        }
+    }
+    return dp[n][W];
+}
+int main() {
+    vector<int> val = {60, 100, 120};
+    vector<int> wt = {10, 20, 30};
+    int W = 50;
+    cout << knapsackDP(W, wt, val, val.size()) << endl;
+    return 0;
+}
+""")
+        programs.append({"name": f"knapsack_{i:02d}", "category": "algorithmic", "subcategory": "knapsack", "unoptimized": unopt, "optimized": opt})
+
+    # 4. Dijkstra's
+    for i in range(1, 10):
+        unopt = prog("""
+int minDistance(const vector<int>& dist, const vector<bool>& sptSet, int V) {
+    int min = INT_MAX, min_index;
+    for (int v = 0; v < V; v++)
+        if (sptSet[v] == false && dist[v] <= min)
+            min = dist[v], min_index = v;
+    return min_index;
+}
+void dijkstra(const vector<vector<int>>& graph, int src) {
+    int V = graph.size();
+    vector<int> dist(V, INT_MAX);
+    vector<bool> sptSet(V, false);
+    dist[src] = 0;
+    for (int count = 0; count < V - 1; count++) {
+        int u = minDistance(dist, sptSet, V);
+        sptSet[u] = true;
+        for (int v = 0; v < V; v++)
+            if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX && dist[u] + graph[u][v] < dist[v])
+                dist[v] = dist[u] + graph[u][v];
+    }
+    for (int i = 0; i < V; i++) cout << i << " \t\t " << dist[i] << endl;
+}
+int main() {
+    vector<vector<int>> graph = {{0, 4, 0, 0, 0}, {4, 0, 8, 0, 0}, {0, 8, 0, 7, 0}, {0, 0, 7, 0, 9}, {0, 0, 0, 9, 0}};
+    dijkstra(graph, 0);
+    return 0;
+}
+""")
+        opt = prog("""
+void dijkstraOpt(const vector<vector<pair<int, int>>>& adj, int src) {
+    int V = adj.size();
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    vector<int> dist(V, INT_MAX);
+    pq.push(make_pair(0, src));
+    dist[src] = 0;
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        for (auto x : adj[u]) {
+            int v = x.first;
+            int weight = x.second;
+            if (dist[v] > dist[u] + weight) {
+                dist[v] = dist[u] + weight;
+                pq.push(make_pair(dist[v], v));
+            }
+        }
+    }
+    for (int i = 0; i < V; ++i) cout << i << " \t\t " << dist[i] << endl;
+}
+int main() {
+    int V = 5;
+    vector<vector<pair<int, int>>> adj(V);
+    adj[0].push_back({1, 4}); adj[1].push_back({0, 4});
+    adj[1].push_back({2, 8}); adj[2].push_back({1, 8});
+    adj[2].push_back({3, 7}); adj[3].push_back({2, 7});
+    adj[3].push_back({4, 9}); adj[4].push_back({3, 9});
+    dijkstraOpt(adj, 0);
+    return 0;
+}
+""")
+        programs.append({"name": f"dijkstra_{i:02d}", "category": "algorithmic", "subcategory": "dijkstra", "unoptimized": unopt, "optimized": opt})
+
+    # 5. Peak Finding
+    for i in range(1, 10):
+        unopt = prog("""
+int findPeak(vector<int>& arr) {
+    int n = arr.size();
+    if (n == 1) return 0;
+    if (arr[0] >= arr[1]) return 0;
+    if (arr[n - 1] >= arr[n - 2]) return n - 1;
+    for (int i = 1; i < n - 1; i++) {
+        if (arr[i] >= arr[i - 1] && arr[i] >= arr[i + 1]) return i;
+    }
+    return 0;
+}
+int main() {
+    vector<int> arr = {1, 3, 20, 4, 1, 0};
+    cout << findPeak(arr) << endl;
+    return 0;
+}
+""")
+        opt = prog("""
+int findPeakUtil(vector<int>& arr, int low, int high, int n) {
+    int mid = low + (high - low) / 2;
+    if ((mid == 0 || arr[mid - 1] <= arr[mid]) && (mid == n - 1 || arr[mid + 1] <= arr[mid])) return mid;
+    else if (mid > 0 && arr[mid - 1] > arr[mid]) return findPeakUtil(arr, low, (mid - 1), n);
+    else return findPeakUtil(arr, (mid + 1), high, n);
+}
+int findPeak(vector<int>& arr) {
+    return findPeakUtil(arr, 0, arr.size() - 1, arr.size());
+}
+int main() {
+    vector<int> arr = {1, 3, 20, 4, 1, 0};
+    cout << findPeak(arr) << endl;
+    return 0;
+}
+""")
+        programs.append({"name": f"peak_finding_{i:02d}", "category": "algorithmic", "subcategory": "peak_finding", "unoptimized": unopt, "optimized": opt})
+
+    # 6. Sliding Window
+    for i in range(1, 10):
+        n = 10 + i * 5
+        k = 2 + (i % 4)
+        unopt = prog(f"""
+int maxSubarraySum(const vector<int>& arr, int k) {{
+    int n = arr.size();
+    int max_sum = INT_MIN;
+    for (int i = 0; i <= n - k; i++) {{
+        int current_sum = 0;
+        for (int j = 0; j < k; j++) {{
+            current_sum += arr[i + j];
+        }}
+        max_sum = max(max_sum, current_sum);
+    }}
+    return max_sum;
+}}
+int main() {{
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = i * 3 - (i % 2) * 5;
+    cout << maxSubarraySum(arr, {k}) << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+int maxSubarraySum(const vector<int>& arr, int k) {{
+    int n = arr.size();
+    if (n < k) return 0;
+    int window_sum = 0;
+    for (int i = 0; i < k; i++) window_sum += arr[i];
+    int max_sum = window_sum;
+    for (int i = k; i < n; i++) {{
+        window_sum += arr[i] - arr[i - k];
+        max_sum = max(max_sum, window_sum);
+    }}
+    return max_sum;
+}}
+int main() {{
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = i * 3 - (i % 2) * 5;
+    cout << maxSubarraySum(arr, {k}) << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"sliding_window_{i:02d}", "category": "algorithmic", "subcategory": "sliding_window", "unoptimized": unopt, "optimized": opt})
+
+    # 7. Binary Search on Answer
+    for i in range(1, 10):
+        n = 5 + i
+        m = 2 + (i % 3)
+        unopt = prog(f"""
+bool isPossible(const vector<int>& arr, int n, int m, int curr_min) {{
+    int studentsRequired = 1;
+    int curr_sum = 0;
+    for (int i = 0; i < n; i++) {{
+        if (arr[i] > curr_min) return false;
+        if (curr_sum + arr[i] > curr_min) {{
+            studentsRequired++;
+            curr_sum = arr[i];
+            if (studentsRequired > m) return false;
+        }} else {{
+            curr_sum += arr[i];
         }}
     }}
-    return dp[n][W];
+    return true;
+}}
+int findPages(const vector<int>& arr, int n, int m) {{
+    long long sum = 0;
+    int maxVal = 0;
+    for (int i = 0; i < n; i++) {{
+        sum += arr[i];
+        maxVal = max(maxVal, arr[i]);
+    }}
+    for (int pages = maxVal; pages <= sum; pages++) {{
+        if (isPossible(arr, n, m, pages)) return pages;
+    }}
+    return -1;
 }}
 int main() {{
-    vector<int> val = {{{", ".join(str(j * i % 15 + 1) for j in range(1, n + 1))}}};
-    vector<int> wt  = {{{", ".join(str(j * 2 % 8 + 1) for j in range(1, n + 1))}}};
-    cout << knapsack({w}, wt, val, {n}) << endl;
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = (i + 1) * 10 + {i};
+    cout << findPages(arr, {n}, {m}) << endl;
     return 0;
 }}
-""")))
-
-    # Longest Common Subsequence
-    for i in range(1, 9):
-        programs.append((f"lcs_{i:02d}", prog(f"""
-int lcs(string& a, string& b) {{
-    int m = a.size(), n = b.size();
-    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-    for (int i = 1; i <= m; i++)
-        for (int j = 1; j <= n; j++)
-            dp[i][j] = a[i-1] == b[j-1] ? dp[i-1][j-1] + 1 : max(dp[i-1][j], dp[i][j-1]);
-    return dp[m][n];
+""")
+        opt = prog(f"""
+bool isPossible(const vector<int>& arr, int n, int m, int curr_min) {{
+    int studentsRequired = 1;
+    int curr_sum = 0;
+    for (int i = 0; i < n; i++) {{
+        if (arr[i] > curr_min) return false;
+        if (curr_sum + arr[i] > curr_min) {{
+            studentsRequired++;
+            curr_sum = arr[i];
+            if (studentsRequired > m) return false;
+        }} else {{
+            curr_sum += arr[i];
+        }}
+    }}
+    return true;
+}}
+int findPages(const vector<int>& arr, int n, int m) {{
+    long long sum = 0;
+    int maxVal = 0;
+    for (int i = 0; i < n; i++) {{
+        sum += arr[i];
+        maxVal = max(maxVal, arr[i]);
+    }}
+    int start = maxVal, end = sum, ans = -1;
+    while (start <= end) {{
+        int mid = start + (end - start) / 2;
+        if (isPossible(arr, n, m, mid)) {{
+            ans = mid;
+            end = mid - 1;
+        }} else {{
+            start = mid + 1;
+        }}
+    }}
+    return ans;
 }}
 int main() {{
-    string a = "{'ABCBDAB'[:i+3]}";
-    string b = "{'BDCAB'[:i+2]}";
-    cout << lcs(a, b) << endl;
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = (i + 1) * 10 + {i};
+    cout << findPages(arr, {n}, {m}) << endl;
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"binary_search_ans_{i:02d}", "category": "algorithmic", "subcategory": "binary_search_ans", "unoptimized": unopt, "optimized": opt})
 
-    # Longest Increasing Subsequence
-    for i in range(1, 8):
-        programs.append((f"lis_{i:02d}", prog(f"""
-int lis(vector<int>& arr) {{
+    # 8. Dynamic Programming - LIS
+    for i in range(1, 10):
+        n = 8 + i
+        unopt = prog(f"""
+int lis(const vector<int>& arr) {{
     int n = arr.size();
     vector<int> dp(n, 1);
-    for (int i = 1; i < n; i++)
-        for (int j = 0; j < i; j++)
-            if (arr[j] < arr[i]) dp[i] = max(dp[i], dp[j] + 1);
-    return *max_element(dp.begin(), dp.end());
+    int max_lis = 0;
+    for (int i = 1; i < n; i++) {{
+        for (int j = 0; j < i; j++) {{
+            if (arr[i] > arr[j] && dp[i] < dp[j] + 1) {{
+                dp[i] = dp[j] + 1;
+            }}
+        }}
+    }}
+    for (int i = 0; i < n; i++) max_lis = max(max_lis, dp[i]);
+    return max_lis;
 }}
 int main() {{
-    vector<int> arr = {{{", ".join(str((j * i * 3 + 7) % 15) for j in range(8 + i))}}};
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = (i * 7 + 11) % 13 + {i};
     cout << lis(arr) << endl;
     return 0;
 }}
-""")))
+""")
+        opt = prog(f"""
+int lis(const vector<int>& arr) {{
+    int n = arr.size();
+    if (n == 0) return 0;
+    vector<int> tails;
+    for (int x : arr) {{
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }}
+    return tails.size();
+}}
+int main() {{
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = (i * 7 + 11) % 13 + {i};
+    cout << lis(arr) << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"lis_{i:02d}", "category": "algorithmic", "subcategory": "lis", "unoptimized": unopt, "optimized": opt})
 
-    # Matrix chain multiplication
-    for i in range(1, 7):
-        n = 3 + i
-        programs.append((f"matrix_chain_{i:02d}", prog(f"""
-int matrixChain(vector<int>& p, int n) {{
-    vector<vector<int>> dp(n, vector<int>(n, 0));
-    for (int len = 2; len < n; len++) {{
-        for (int i = 1; i < n - len + 1; i++) {{
-            int j = i + len - 1;
-            dp[i][j] = INT_MAX;
-            for (int k = i; k < j; k++) {{
-                int cost = dp[i][k] + dp[k+1][j] + p[i-1]*p[k]*p[j];
-                dp[i][j] = min(dp[i][j], cost);
+    # 9. Segment Tree
+    for i in range(1, 10):
+        n = 8 + i
+        unopt = prog(f"""
+void update(vector<int>& arr, int idx, int val) {{
+    arr[idx] = val;
+}}
+int query(const vector<int>& arr, int l, int r) {{
+    int sum = 0;
+    for (int i = l; i <= r; i++) sum += arr[i];
+    return sum;
+}}
+int main() {{
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = i * 2;
+    update(arr, 2, 10 + {i});
+    cout << query(arr, 1, 5) << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+class SegTree {{
+    vector<int> tree; int n;
+    void build(const vector<int>& arr, int node, int start, int end) {{
+        if (start == end) {{ tree[node] = arr[start]; return; }}
+        int mid = start + (end - start) / 2;
+        build(arr, 2 * node, start, mid);
+        build(arr, 2 * node + 1, mid + 1, end);
+        tree[node] = tree[2 * node] + tree[2 * node + 1];
+    }}
+    void updateVal(int node, int start, int end, int idx, int val) {{
+        if (start == end) {{ tree[node] = val; return; }}
+        int mid = start + (end - start) / 2;
+        if (idx <= mid) updateVal(2 * node, start, mid, idx, val);
+        else updateVal(2 * node + 1, mid + 1, end, idx, val);
+        tree[node] = tree[2 * node] + tree[2 * node + 1];
+    }}
+    int queryRange(int node, int start, int end, int l, int r) {{
+        if (r < start || end < l) return 0;
+        if (l <= start && end <= r) return tree[node];
+        int mid = start + (end - start) / 2;
+        return queryRange(2 * node, start, mid, l, r) + queryRange(2 * node + 1, mid + 1, end, l, r);
+    }}
+public:
+    SegTree(const vector<int>& arr) {{
+        n = arr.size();
+        tree.resize(4 * n, 0);
+        build(arr, 1, 0, n - 1);
+    }}
+    void update(int idx, int val) {{ updateVal(1, 0, n - 1, idx, val); }}
+    int query(int l, int r) {{ return queryRange(1, 0, n - 1, l, r); }}
+}};
+int main() {{
+    vector<int> arr({n});
+    for(int i=0; i<{n}; i++) arr[i] = i * 2;
+    SegTree st(arr);
+    st.update(2, 10 + {i});
+    cout << st.query(1, 5) << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"segment_tree_{i:02d}", "category": "algorithmic", "subcategory": "segment_tree", "unoptimized": unopt, "optimized": opt})
+
+    # 10. Fenwick Tree
+    for i in range(1, 10):
+        n = 8 + i
+        unopt = prog(f"""
+void update(vector<int>& arr, int idx, int val) {{
+    arr[idx] += val;
+}}
+int query(const vector<int>& arr, int idx) {{
+    int sum = 0;
+    for (int i = 0; i <= idx; i++) sum += arr[i];
+    return sum;
+}}
+int main() {{
+    vector<int> arr({n}, 0);
+    for(int i=0; i<{n}; i++) update(arr, i, i + 1);
+    cout << query(arr, 5) << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+class Fenwick {{
+    vector<int> tree;
+public:
+    Fenwick(int n) {{ tree.resize(n + 1, 0); }}
+    void update(int idx, int val) {{
+        idx++;
+        while (idx < (int)tree.size()) {{
+            tree[idx] += val;
+            idx += idx & -idx;
+        }}
+    }}
+    int query(int idx) {{
+        idx++;
+        int sum = 0;
+        while (idx > 0) {{
+            sum += tree[idx];
+            idx -= idx & -idx;
+        }}
+        return sum;
+    }}
+}};
+int main() {{
+    Fenwick fen({n});
+    for(int i=0; i<{n}; i++) fen.update(i, i + 1);
+    cout << fen.query(5) << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"fenwick_{i:02d}", "category": "algorithmic", "subcategory": "fenwick", "unoptimized": unopt, "optimized": opt})
+
+    # 11. DSU (Disjoint Set Union)
+    for i in range(1, 10):
+        n = 10 + i
+        unopt = prog(f"""
+int findParent(const vector<int>& parent, int i) {{
+    int curr = i;
+    while (parent[curr] != curr) curr = parent[curr];
+    return curr;
+}}
+bool isConnected(const vector<int>& parent, int i, int j) {{
+    return findParent(parent, i) == findParent(parent, j);
+}}
+int main() {{
+    vector<int> parent({n});
+    for(int i=0; i<{n}; i++) parent[i] = i;
+    parent[1] = 0; parent[2] = 1;
+    cout << isConnected(parent, 2, 0) << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+class DSU {{
+    vector<int> parent, rank;
+public:
+    DSU(int n) {{
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }}
+    int find(int i) {{
+        if (parent[i] != i) parent[i] = find(parent[i]);
+        return parent[i];
+    }}
+    void union_sets(int i, int j) {{
+        int root_i = find(i);
+        int root_j = find(j);
+        if (root_i != root_j) {{
+            if (rank[root_i] < rank[root_j]) swap(root_i, root_j);
+            parent[root_j] = root_i;
+            if (rank[root_i] == rank[root_j]) rank[root_i]++;
+        }}
+    }}
+    bool isConnected(int i, int j) {{
+        return find(i) == find(j);
+    }}
+}};
+int main() {{
+    DSU dsu({n});
+    dsu.union_sets(0, 1); dsu.union_sets(1, 2);
+    cout << dsu.isConnected(2, 0) << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"dsu_{i:02d}", "category": "algorithmic", "subcategory": "dsu", "unoptimized": unopt, "optimized": opt})
+
+    # 12. KMP (Knuth-Morris-Pratt)
+    for i in range(1, 10):
+        unopt = prog(f"""
+int naiveSearch(const string& txt, const string& pat) {{
+    int N = txt.length();
+    int M = pat.length();
+    for (int i = 0; i <= N - M; i++) {{
+        int j;
+        for (j = 0; j < M; j++) {{
+            if (txt[i + j] != pat[j]) break;
+        }}
+        if (j == M) return i;
+    }}
+    return -1;
+}}
+int main() {{
+    string txt = "ABABDABACDABABCABAB{i}";
+    string pat = "ABABC";
+    cout << naiveSearch(txt, pat) << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+vector<int> computeLPS(const string& pat) {{
+    int M = pat.length();
+    vector<int> lps(M, 0);
+    int len = 0;
+    int i = 1;
+    while (i < M) {{
+        if (pat[i] == pat[len]) {{
+            len++;
+            lps[i] = len;
+            i++;
+        }} else {{
+            if (len != 0) {{
+                len = lps[len - 1];
+            }} else {{
+                lps[i] = 0;
+                i++;
             }}
         }}
     }}
-    return dp[1][n-1];
-}}
-int main() {{
-    vector<int> p = {{{", ".join(str(j * i % 20 + 5) for j in range(n + 1))}}};
-    cout << matrixChain(p, {n}) << endl;
-    return 0;
-}}
-""")))
-
-    # Coin change
-    for i in range(1, 8):
-        programs.append((f"coin_change_{i:02d}", prog(f"""
-int coinChange(vector<int>& coins, int amount) {{
-    vector<int> dp(amount + 1, INT_MAX);
-    dp[0] = 0;
-    for (int i = 1; i <= amount; i++) {{
-        for (int c : coins) {{
-            if (c <= i && dp[i - c] != INT_MAX)
-                dp[i] = min(dp[i], dp[i - c] + 1);
-        }}
-    }}
-    return dp[amount] == INT_MAX ? -1 : dp[amount];
-}}
-int main() {{
-    vector<int> coins = {{{", ".join(str(j * i % 8 + 1) for j in range(1, 4))}}};
-    cout << coinChange(coins, {10 + i * 5}) << endl;
-    return 0;
-}}
-""")))
-
-    # Edit distance
-    for i in range(1, 7):
-        programs.append((f"edit_distance_{i:02d}", prog(f"""
-int editDistance(string& a, string& b) {{
-    int m = a.size(), n = b.size();
-    vector<vector<int>> dp(m + 1, vector<int>(n + 1));
-    for (int i = 0; i <= m; i++) dp[i][0] = i;
-    for (int j = 0; j <= n; j++) dp[0][j] = j;
-    for (int i = 1; i <= m; i++) {{
-        for (int j = 1; j <= n; j++) {{
-            if (a[i-1] == b[j-1]) dp[i][j] = dp[i-1][j-1];
-            else dp[i][j] = 1 + min({{dp[i-1][j], dp[i][j-1], dp[i-1][j-1]}});
-        }}
-    }}
-    return dp[m][n];
-}}
-int main() {{
-    string a = "kitten"; string b = "sitting";
-    cout << editDistance(a, b) << endl;
-    return 0;
-}}
-""")))
-
-    # Partition DP
-    for i in range(1, 8):
-        programs.append((f"subset_sum_{i:02d}", prog(f"""
-bool subsetSum(vector<int>& arr, int sum) {{
-    int n = arr.size();
-    vector<vector<bool>> dp(n + 1, vector<bool>(sum + 1, false));
-    for (int i = 0; i <= n; i++) dp[i][0] = true;
-    for (int i = 1; i <= n; i++) {{
-        for (int j = 1; j <= sum; j++) {{
-            dp[i][j] = dp[i-1][j];
-            if (arr[i-1] <= j) dp[i][j] = dp[i][j] || dp[i-1][j - arr[i-1]];
-        }}
-    }}
-    return dp[n][sum];
-}}
-int main() {{
-    vector<int> arr = {{{", ".join(str(j * i % 10 + 1) for j in range(1, 6))}}};
-    cout << (subsetSum(arr, {i * 5}) ? "YES" : "NO") << endl;
-    return 0;
-}}
-""")))
-
-    # Rod cutting
-    for i in range(1, 7):
-        n = 4 + i
-        programs.append((f"rod_cutting_{i:02d}", prog(f"""
-int rodCutting(vector<int>& price, int n) {{
-    vector<int> dp(n + 1, 0);
-    for (int i = 1; i <= n; i++) {{
-        for (int j = 1; j <= i; j++) {{
-            dp[i] = max(dp[i], price[j-1] + dp[i-j]);
-        }}
-    }}
-    return dp[n];
-}}
-int main() {{
-    vector<int> price = {{{", ".join(str(j * i % 12 + 1) for j in range(1, n + 1))}}};
-    cout << rodCutting(price, {n}) << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:75]
-
-
-# ============================================================
-# CATEGORY 5: STL Usage Patterns (50 programs)
-# ============================================================
-
-def stl_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    containers = [
-        ("vector", "vector<int>"),
-        ("list", "list<int>"),
-        ("deque", "deque<int>"),
-        ("map", "map<int,int>"),
-        ("set", "set<int>"),
-        ("multiset", "multiset<int>"),
-        ("unordered_map", "unordered_map<int,int>"),
-        ("priority_queue", "priority_queue<int>"),
-    ]
-
-    for i, (name, ctype) in enumerate(containers * 7):
-        idx = i + 1
-        if idx > 50:
-            break
-        programs.append((f"stl_{name}_{idx:02d}", prog(f"""
-#include <list>
-#include <deque>
-#include <unordered_map>
-int main() {{
-    {ctype} c;
-    for (int i = 0; i < {10 + idx}; i++) {{
-        c.insert(c.end() if False else c.end(), i);
-    }}
-    return 0;
-}}
-""")))
-
-    # Use cleaner STL programs
-    programs = []
-    for i in range(1, 11):
-        programs.append((f"stl_vector_algo_{i:02d}", prog(f"""
-int main() {{
-    vector<int> v({10 + i * 3});
-    iota(v.begin(), v.end(), 1);
-    sort(v.begin(), v.end(), greater<int>());
-    auto it = find(v.begin(), v.end(), {i * 2});
-    if (it != v.end()) v.erase(it);
-    v.erase(remove_if(v.begin(), v.end(), [](int x) {{ return x % 3 == 0; }}), v.end());
-    int total = accumulate(v.begin(), v.end(), 0);
-    cout << total << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"stl_map_freq_{i:02d}", prog(f"""
-int main() {{
-    vector<int> arr = {{{", ".join(str((j * i + 3) % 8) for j in range(10 + i))}}};
-    map<int, int> freq;
-    for (int x : arr) freq[x]++;
-    int maxFreq = 0, mode = 0;
-    for (auto& [k, v] : freq) if (v > maxFreq) {{ maxFreq = v; mode = k; }}
-    cout << "Mode: " << mode << " Freq: " << maxFreq << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"stl_set_ops_{i:02d}", prog(f"""
-int main() {{
-    set<int> a, b;
-    for (int j = 0; j < {8 + i}; j++) a.insert(j);
-    for (int j = {i}; j < {8 + i * 2}; j++) b.insert(j);
-    vector<int> inter, uni;
-    set_intersection(a.begin(), a.end(), b.begin(), b.end(), back_inserter(inter));
-    set_union(a.begin(), a.end(), b.begin(), b.end(), back_inserter(uni));
-    cout << "Intersection: " << inter.size() << " Union: " << uni.size() << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"stl_priority_queue_{i:02d}", prog(f"""
-int main() {{
-    priority_queue<int> maxHeap;
-    priority_queue<int, vector<int>, greater<int>> minHeap;
-    for (int j = 0; j < {8 + i * 2}; j++) {{
-        maxHeap.push(j * {i} % 50);
-        minHeap.push(j * {i} % 50);
-    }}
-    cout << "Max: " << maxHeap.top() << " Min: " << minHeap.top() << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"stl_transform_{i:02d}", prog(f"""
-int main() {{
-    vector<int> v({8 + i * 2});
-    iota(v.begin(), v.end(), 1);
-    vector<int> result(v.size());
-    transform(v.begin(), v.end(), result.begin(), [](int x) {{ return x * x; }});
-    vector<int> evens;
-    copy_if(result.begin(), result.end(), back_inserter(evens), [](int x) {{ return x % 2 == 0; }});
-    cout << evens.size() << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 6: Memory Management (50 programs)
-# ============================================================
-
-def memory_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    for i in range(1, 11):
-        programs.append((f"linked_list_{i:02d}", prog(f"""
-struct Node {{ int data; Node* next; Node(int d) : data(d), next(nullptr) {{}} }};
-class LinkedList {{
-    Node* head;
-public:
-    LinkedList() : head(nullptr) {{}}
-    void push(int val) {{ Node* n = new Node(val); n->next = head; head = n; }}
-    void print() {{ for (Node* p = head; p; p = p->next) cout << p->data << " "; }}
-    ~LinkedList() {{ while (head) {{ Node* t = head; head = head->next; delete t; }} }}
-}};
-int main() {{
-    LinkedList ll;
-    for (int i = 0; i < {5 + i * 2}; i++) ll.push(i * {i});
-    ll.print();
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"dynamic_array_{i:02d}", prog(f"""
-class DynArray {{
-    int* data;
-    int sz, cap;
-public:
-    DynArray() : data(new int[4]), sz(0), cap(4) {{}}
-    void push(int val) {{
-        if (sz == cap) {{
-            int* tmp = new int[cap * 2];
-            for (int i = 0; i < sz; i++) tmp[i] = data[i];
-            delete[] data;
-            data = tmp;
-            cap *= 2;
-        }}
-        data[sz++] = val;
-    }}
-    void print() {{ for (int i = 0; i < sz; i++) cout << data[i] << " "; }}
-    ~DynArray() {{ delete[] data; }}
-}};
-int main() {{
-    DynArray arr;
-    for (int i = 0; i < {8 + i * 3}; i++) arr.push(i * {i % 5 + 1});
-    arr.print();
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"matrix_heap_{i:02d}", prog(f"""
-int main() {{
-    int rows = {3 + i}, cols = {3 + i};
-    int** matrix = new int*[rows];
-    for (int i = 0; i < rows; i++) {{
-        matrix[i] = new int[cols];
-        for (int j = 0; j < cols; j++) matrix[i][j] = i * cols + j;
-    }}
-    for (int i = 0; i < rows; i++) {{
-        for (int j = 0; j < cols; j++) cout << matrix[i][j] << " ";
-        cout << endl;
-        delete[] matrix[i];
-    }}
-    delete[] matrix;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"smart_ptr_{i:02d}", prog(f"""
-#include <memory>
-struct Resource {{
-    int id;
-    Resource(int id) : id(id) {{ }}
-    ~Resource() {{ }}
-}};
-int main() {{
-    vector<unique_ptr<Resource>> resources;
-    for (int i = 0; i < {5 + i * 2}; i++) resources.push_back(make_unique<Resource>(i * {i}));
-    for (auto& r : resources) cout << r->id << " ";
-    return 0;
-}}
-""")))
-
-    for i in range(1, 10):
-        programs.append((f"pool_alloc_{i:02d}", prog(f"""
-struct Node {{ int val; Node* next; }};
-Node* pool = nullptr;
-Node* allocNode(int v) {{
-    Node* n = new Node();
-    n->val = v; n->next = nullptr;
-    return n;
-}}
-int main() {{
-    Node* head = nullptr;
-    for (int i = {5 + i}; i >= 0; i--) {{
-        Node* n = allocNode(i);
-        n->next = head;
-        head = n;
-    }}
-    Node* cur = head;
-    while (cur) {{ cout << cur->val << " "; Node* t = cur; cur = cur->next; delete t; }}
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 7: Recursion & Trees (50 programs)
-# ============================================================
-
-def recursion_tree_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    for i in range(1, 11):
-        programs.append((f"bst_{i:02d}", prog(f"""
-struct Node {{ int key; Node *left, *right; Node(int k) : key(k), left(nullptr), right(nullptr) {{}} }};
-Node* insert(Node* root, int key) {{
-    if (!root) return new Node(key);
-    if (key < root->key) root->left = insert(root->left, key);
-    else root->right = insert(root->right, key);
-    return root;
-}}
-void inorder(Node* root) {{
-    if (!root) return;
-    inorder(root->left);
-    cout << root->key << " ";
-    inorder(root->right);
-}}
-void freeTree(Node* root) {{ if (!root) return; freeTree(root->left); freeTree(root->right); delete root; }}
-int main() {{
-    Node* root = nullptr;
-    for (int k : {{{", ".join(str((j * i * 3 + 7) % 30) for j in range(1, 8))}}}) root = insert(root, k);
-    inorder(root);
-    freeTree(root);
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"tower_of_hanoi_{i:02d}", prog(f"""
-void hanoi(int n, char from, char to, char aux) {{
-    if (n == 0) return;
-    hanoi(n - 1, from, aux, to);
-    cout << "Move disk " << n << " from " << from << " to " << to << endl;
-    hanoi(n - 1, aux, to, from);
-}}
-int main() {{
-    hanoi({min(i, 5)}, 'A', 'C', 'B');
-    return 0;
-}}
-""")))
-
-    for i in range(1, 11):
-        programs.append((f"tree_traversal_{i:02d}", prog(f"""
-struct Node {{ int val; Node *l, *r; Node(int v) : val(v), l(nullptr), r(nullptr) {{}} }};
-int height(Node* n) {{ return n ? 1 + max(height(n->l), height(n->r)) : 0; }}
-int leafCount(Node* n) {{ if (!n) return 0; if (!n->l && !n->r) return 1; return leafCount(n->l) + leafCount(n->r); }}
-void postorder(Node* n) {{ if (!n) return; postorder(n->l); postorder(n->r); cout << n->val << " "; }}
-void freeTree(Node* n) {{ if (!n) return; freeTree(n->l); freeTree(n->r); delete n; }}
-int main() {{
-    Node* root = new Node({i});
-    root->l = new Node({i+1}); root->r = new Node({i+2});
-    root->l->l = new Node({i+3}); root->l->r = new Node({i+4});
-    root->r->l = new Node({i+5});
-    postorder(root);
-    cout << endl << "Height: " << height(root) << " Leaves: " << leafCount(root);
-    freeTree(root);
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"permutations_{i:02d}", prog(f"""
-void permute(vector<int>& arr, int l, int r, int& count) {{
-    if (l == r) {{ count++; return; }}
-    for (int i = l; i <= r; i++) {{
-        swap(arr[l], arr[i]);
-        permute(arr, l + 1, r, count);
-        swap(arr[l], arr[i]);
-    }}
-}}
-int main() {{
-    vector<int> arr({min(i, 7)});
-    iota(arr.begin(), arr.end(), 1);
-    int count = 0;
-    permute(arr, 0, arr.size() - 1, count);
-    cout << count << " permutations" << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 10):
-        programs.append((f"n_queens_{i:02d}", prog(f"""
-int n = {min(i + 3, 9)};
-bool isSafe(vector<int>& col, int row, int c) {{
-    for (int r = 0; r < row; r++) {{
-        if (col[r] == c || abs(col[r] - c) == abs(r - row)) return false;
-    }}
-    return true;
-}}
-int solve(vector<int>& col, int row) {{
-    if (row == n) return 1;
-    int count = 0;
-    for (int c = 0; c < n; c++) {{
-        if (isSafe(col, row, c)) {{
-            col[row] = c;
-            count += solve(col, row + 1);
-        }}
-    }}
-    return count;
-}}
-int main() {{
-    vector<int> col(n);
-    cout << solve(col, 0) << " solutions" << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 8: Competitive Programming (50 programs)
-# ============================================================
-
-def competitive_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    for i in range(1, 11):
-        programs.append((f"segment_tree_{i:02d}", prog(f"""
-struct SegTree {{
-    int n;
-    vector<int> tree;
-    SegTree(vector<int>& arr) : n(arr.size()), tree(4 * arr.size()) {{ build(arr, 0, 0, n-1); }}
-    void build(vector<int>& arr, int node, int l, int r) {{
-        if (l == r) {{ tree[node] = arr[l]; return; }}
-        int m = (l + r) / 2;
-        build(arr, 2*node+1, l, m);
-        build(arr, 2*node+2, m+1, r);
-        tree[node] = tree[2*node+1] + tree[2*node+2];
-    }}
-    int query(int node, int l, int r, int ql, int qr) {{
-        if (qr < l || r < ql) return 0;
-        if (ql <= l && r <= qr) return tree[node];
-        int m = (l + r) / 2;
-        return query(2*node+1, l, m, ql, qr) + query(2*node+2, m+1, r, ql, qr);
-    }}
-    int query(int l, int r) {{ return query(0, 0, n-1, l, r); }}
-}};
-int main() {{
-    vector<int> arr({5 + i * 3});
-    iota(arr.begin(), arr.end(), 1);
-    SegTree st(arr);
-    cout << st.query(0, {i * 2}) << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"fenwick_tree_{i:02d}", prog(f"""
-struct BIT {{
-    int n;
-    vector<int> tree;
-    BIT(int n) : n(n), tree(n + 1, 0) {{}}
-    void update(int i, int delta) {{ for (++i; i <= n; i += i & (-i)) tree[i] += delta; }}
-    int query(int i) {{ int s = 0; for (++i; i > 0; i -= i & (-i)) s += tree[i]; return s; }}
-    int query(int l, int r) {{ return query(r) - (l > 0 ? query(l-1) : 0); }}
-}};
-int main() {{
-    int n = {8 + i * 2};
-    BIT bit(n);
-    for (int i = 0; i < n; i++) bit.update(i, i + 1);
-    cout << bit.query(0, {i * 2}) << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"two_pointer_{i:02d}", prog(f"""
-int main() {{
-    vector<int> arr({10 + i * 3});
-    iota(arr.begin(), arr.end(), 1);
-    int target = {(i + 3) * 5};
-    int l = 0, r = arr.size() - 1, count = 0;
-    while (l < r) {{
-        int sum = arr[l] + arr[r];
-        if (sum == target) {{ count++; l++; r--; }}
-        else if (sum < target) l++;
-        else r--;
-    }}
-    cout << count << " pairs" << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"sliding_window_{i:02d}", prog(f"""
-int main() {{
-    vector<int> arr = {{{", ".join(str((j * i + 3) % 15) for j in range(10 + i))}}};
-    int k = {2 + i % 4};
-    int windowSum = 0, maxSum = 0;
-    for (int i = 0; i < k; i++) windowSum += arr[i];
-    maxSum = windowSum;
-    for (int i = k; i < (int)arr.size(); i++) {{
-        windowSum += arr[i] - arr[i - k];
-        maxSum = max(maxSum, windowSum);
-    }}
-    cout << maxSum << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 7):
-        programs.append((f"kadane_{i:02d}", prog(f"""
-int main() {{
-    vector<int> arr = {{{", ".join(str((j * i - 5) % 20 - 8) for j in range(8 + i))}}};
-    int maxSum = arr[0], cur = arr[0];
-    for (int i = 1; i < (int)arr.size(); i++) {{
-        cur = max(arr[i], cur + arr[i]);
-        maxSum = max(maxSum, cur);
-    }}
-    cout << maxSum << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 6):
-        programs.append((f"fast_exponent_{i:02d}", prog(f"""
-long long power(long long base, long long exp, long long mod) {{
-    long long result = 1;
-    base %= mod;
-    while (exp > 0) {{
-        if (exp % 2 == 1) result = result * base % mod;
-        base = base * base % mod;
-        exp /= 2;
-    }}
-    return result;
-}}
-int main() {{
-    cout << power({i * 3}, {i * 7 + 10}, {i * 100 + 7}) << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:50]
-
-
-# ============================================================
-# CATEGORY 9: Mathematical Algorithms (25 programs)
-# ============================================================
-
-def math_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    for i in range(1, 8):
-        programs.append((f"sieve_primes_{i:02d}", prog(f"""
-vector<int> sieve(int n) {{
-    vector<bool> is_prime(n + 1, true);
-    vector<int> primes;
-    is_prime[0] = is_prime[1] = false;
-    for (int i = 2; i <= n; i++) {{
-        if (is_prime[i]) {{
-            primes.push_back(i);
-            for (long long j = (long long)i * i; j <= n; j += i) is_prime[j] = false;
-        }}
-    }}
-    return primes;
-}}
-int main() {{
-    auto p = sieve({50 + i * 20});
-    cout << p.size() << " primes. Last: " << p.back() << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 7):
-        programs.append((f"gcd_lcm_{i:02d}", prog(f"""
-long long gcd(long long a, long long b) {{ return b == 0 ? a : gcd(b, a % b); }}
-long long lcm(long long a, long long b) {{ return a / gcd(a, b) * b; }}
-int main() {{
-    vector<long long> nums = {{{", ".join(str(j * i * 3 + 7) for j in range(1, 6))}}};
-    long long g = nums[0], l = nums[0];
-    for (int i = 1; i < (int)nums.size(); i++) {{
-        g = gcd(g, nums[i]);
-        l = lcm(l, nums[i]);
-    }}
-    cout << "GCD=" << g << " LCM=" << l << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 7):
-        programs.append((f"matrix_mult_{i:02d}", prog(f"""
-int main() {{
-    int n = {2 + i};
-    vector<vector<int>> A(n, vector<int>(n)), B(n, vector<int>(n)), C(n, vector<int>(n, 0));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) {{ A[i][j] = i + j; B[i][j] = i * j + 1; }}
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            for (int k = 0; k < n; k++)
-                C[i][j] += A[i][k] * B[k][j];
-    cout << C[0][0] << " " << C[n-1][n-1] << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 6):
-        programs.append((f"number_theory_{i:02d}", prog(f"""
-bool isPrime(int n) {{
-    if (n < 2) return false;
-    for (int i = 2; i * i <= n; i++) if (n % i == 0) return false;
-    return true;
-}}
-vector<int> primeFactors(int n) {{
-    vector<int> factors;
-    for (int i = 2; i * i <= n; i++) while (n % i == 0) {{ factors.push_back(i); n /= i; }}
-    if (n > 1) factors.push_back(n);
-    return factors;
-}}
-int main() {{
-    int n = {i * 37 + 13};
-    auto f = primeFactors(n);
-    cout << n << " factors: ";
-    for (int x : f) cout << x << " ";
-    return 0;
-}}
-""")))
-
-    return programs[:25]
-
-
-# ============================================================
-# CATEGORY 10: String Algorithms (25 programs)
-# ============================================================
-
-def string_programs() -> list[tuple[str, str]]:
-    programs = []
-
-    for i in range(1, 9):
-        programs.append((f"kmp_{i:02d}", prog(f"""
-vector<int> buildLPS(const string& pattern) {{
-    int m = pattern.size();
-    vector<int> lps(m, 0);
-    int len = 0, i = 1;
-    while (i < m) {{
-        if (pattern[i] == pattern[len]) {{ lps[i++] = ++len; }}
-        else if (len) len = lps[len - 1];
-        else lps[i++] = 0;
-    }}
     return lps;
 }}
-int kmpSearch(const string& text, const string& pattern) {{
-    auto lps = buildLPS(pattern);
-    int i = 0, j = 0, count = 0;
-    while (i < (int)text.size()) {{
-        if (text[i] == pattern[j]) {{ i++; j++; }}
-        if (j == (int)pattern.size()) {{ count++; j = lps[j-1]; }}
-        else if (i < (int)text.size() && text[i] != pattern[j])
-            j ? j = lps[j-1] : i++;
+int KMPSearch(const string& txt, const string& pat) {{
+    int N = txt.length();
+    int M = pat.length();
+    vector<int> lps = computeLPS(pat);
+    int i = 0, j = 0;
+    while (i < N) {{
+        if (pat[j] == txt[i]) {{
+            j++; i++;
+        }}
+        if (j == M) return i - j;
+        else if (i < N && pat[j] != txt[i]) {{
+            if (j != 0) j = lps[j - 1];
+            else i++;
+        }}
     }}
-    return count;
+    return -1;
 }}
 int main() {{
-    string text = "{'ababcababcabc'[:5 + i * 2]}";
-    string pat = "{'abc'[:1 + i % 3]}";
-    cout << kmpSearch(text, pat) << " occurrences" << endl;
+    string txt = "ABABDABACDABABCABAB{i}";
+    string pat = "ABABC";
+    cout << KMPSearch(txt, pat) << endl;
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"kmp_{i:02d}", "category": "algorithmic", "subcategory": "kmp", "unoptimized": unopt, "optimized": opt})
 
-    for i in range(1, 9):
-        programs.append((f"palindrome_{i:02d}", prog(f"""
-bool isPalindrome(const string& s) {{
-    int l = 0, r = s.size() - 1;
-    while (l < r) if (s[l++] != s[r--]) return false;
-    return true;
-}}
-string longestPalindrome(const string& s) {{
-    int n = s.size(), start = 0, maxLen = 1;
-    for (int i = 0; i < n; i++) {{
-        for (int l = i, r = i; l >= 0 && r < n && s[l] == s[r]; l--, r++)
-            if (r - l + 1 > maxLen) {{ maxLen = r - l + 1; start = l; }}
-        for (int l = i, r = i + 1; l >= 0 && r < n && s[l] == s[r]; l--, r++)
-            if (r - l + 1 > maxLen) {{ maxLen = r - l + 1; start = l; }}
-    }}
-    return s.substr(start, maxLen);
-}}
-int main() {{
-    string s = "{'babad racecar madam level'[:4 + i * 3]}";
-    cout << longestPalindrome(s) << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"anagram_{i:02d}", prog(f"""
-bool isAnagram(const string& a, const string& b) {{
-    if (a.size() != b.size()) return false;
-    map<char, int> freq;
-    for (char c : a) freq[c]++;
-    for (char c : b) if (--freq[c] < 0) return false;
-    return true;
-}}
-int main() {{
-    vector<pair<string,string>> tests = {{
-        {{"listen", "silent"}},
-        {{"hello", "world"}},
-        {{"{'anagram'[:i+2]}", "{'nagaram'[:i+2]}"}}
-    }};
-    for (auto& [a, b] : tests) cout << a << "/" << b << ": " << (isAnagram(a, b) ? "YES" : "NO") << endl;
-    return 0;
-}}
-""")))
-
-    return programs[:25]
-
+    return programs
 
 # ============================================================
-# CATEGORY 11: Matrix Operations (25 programs)
+# Compiler & Constant Optimizations
 # ============================================================
 
-def matrix_programs() -> list[tuple[str, str]]:
+def compile_time_optimizations():
     programs = []
 
+    # 1. Constant Folding & Compile Time Evaluation
     for i in range(1, 10):
-        n = 2 + i
-        programs.append((f"matrix_ops_{i:02d}", prog(f"""
+        unopt = prog(f"""
 int main() {{
-    int n = {n};
-    vector<vector<int>> A(n, vector<int>(n)), B(n, vector<int>(n));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) {{
-        A[i][j] = i * n + j + 1;
-        B[i][j] = (i + j) * {i % 3 + 1};
-    }}
-    // Addition
-    vector<vector<int>> C(n, vector<int>(n));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) C[i][j] = A[i][j] + B[i][j];
-    // Transpose of C
-    vector<vector<int>> T(n, vector<int>(n));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) T[i][j] = C[j][i];
-    int trace = 0;
-    for (int i = 0; i < n; i++) trace += T[i][i];
-    cout << "Trace: " << trace << endl;
+    int seconds = 60;
+    int minutes = 60;
+    int hours = 24;
+    int days = 365;
+    int total_seconds = seconds * minutes * hours * days * {i};
+    cout << total_seconds << endl;
     return 0;
 }}
-""")))
-
-    for i in range(1, 9):
-        programs.append((f"spiral_matrix_{i:02d}", prog(f"""
+""")
+        opt = prog(f"""
 int main() {{
-    int n = {2 + i};
-    vector<vector<int>> mat(n, vector<int>(n));
-    int top = 0, bottom = n-1, left = 0, right = n-1, num = 1;
-    while (top <= bottom && left <= right) {{
-        for (int i = left; i <= right; i++) mat[top][i] = num++;
-        top++;
-        for (int i = top; i <= bottom; i++) mat[i][right] = num++;
-        right--;
-        if (top <= bottom) {{ for (int i = right; i >= left; i--) mat[bottom][i] = num++; bottom--; }}
-        if (left <= right) {{ for (int i = bottom; i >= top; i--) mat[i][left] = num++; left++; }}
-    }}
-    for (auto& row : mat) {{ for (int x : row) cout << x << "\t"; cout << endl; }}
+    int total_seconds = 31536000 * {i};
+    cout << total_seconds << endl;
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"constant_folding_{i:02d}", "category": "compiler", "subcategory": "constant_folding", "unoptimized": unopt, "optimized": opt})
 
-    for i in range(1, 8):
-        programs.append((f"rotate_matrix_{i:02d}", prog(f"""
+    # 2. Variable & Copy Propagation
+    for i in range(1, 10):
+        unopt = prog(f"""
 int main() {{
-    int n = {2 + i};
-    vector<vector<int>> mat(n, vector<int>(n));
-    for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) mat[i][j] = i * n + j;
-    // Rotate 90 degrees clockwise
-    for (int i = 0; i < n / 2; i++) for (int j = i; j < n - i - 1; j++) {{
-        int tmp = mat[i][j];
-        mat[i][j] = mat[n-j-1][i];
-        mat[n-j-1][i] = mat[n-i-1][n-j-1];
-        mat[n-i-1][n-j-1] = mat[j][n-i-1];
-        mat[j][n-i-1] = tmp;
-    }}
-    for (auto& row : mat) {{ for (int x : row) cout << x << " "; cout << endl; }}
+    int a = 10;
+    int b = a;
+    int c = b * 5;
+    int d = c + 2;
+    cout << d << endl;
     return 0;
 }}
-""")))
+""")
+        opt = prog(f"""
+int main() {{
+    int d = 52;
+    cout << d << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"variable_propagation_{i:02d}", "category": "compiler", "subcategory": "variable_propagation", "unoptimized": unopt, "optimized": opt})
 
-    return programs[:25]
-
+    return programs
 
 # ============================================================
-# CATEGORY 12: Miscellaneous Real-World (25 programs)
+# Code Elimination Optimizations
 # ============================================================
 
-def misc_programs() -> list[tuple[str, str]]:
+def elimination_optimizations():
     programs = []
 
-    for i in range(1, 7):
-        programs.append((f"stack_calculator_{i:02d}", prog(f"""
-int evaluate(const string& expr) {{
-    stack<int> vals;
-    stack<char> ops;
-    auto applyOp = [&]() {{
-        int b = vals.top(); vals.pop();
-        int a = vals.top(); vals.pop();
-        char op = ops.top(); ops.pop();
-        if (op == '+') vals.push(a + b);
-        else if (op == '-') vals.push(a - b);
-        else if (op == '*') vals.push(a * b);
-    }};
-    for (int i = 0; i < (int)expr.size(); i++) {{
-        if (isdigit(expr[i])) {{
-            int num = 0;
-            while (i < (int)expr.size() && isdigit(expr[i])) num = num * 10 + (expr[i++] - '0');
-            i--;
-            vals.push(num);
-        }} else if (expr[i] == '+' || expr[i] == '-') {{
-            while (!ops.empty()) applyOp();
-            ops.push(expr[i]);
-        }} else if (expr[i] == '*') ops.push(expr[i]);
+    # 1. Common Sub Expression Elimination
+    for i in range(1, 10):
+        unopt = prog(f"""
+void calculate(int x, int y, int z) {{
+    int res1 = (x * y * z) + 10;
+    int res2 = (x * y * z) * 20;
+    int res3 = (x * y * z) - 5;
+    cout << res1 << res2 << res3 << endl;
+}}
+int main() {{
+    calculate({i}, {i+1}, {i+2});
+    return 0;
+}}
+""")
+        opt = prog(f"""
+void calculate(int x, int y, int z) {{
+    int t = x * y * z;
+    int res1 = t + 10;
+    int res2 = t * 20;
+    int res3 = t - 5;
+    cout << res1 << res2 << res3 << endl;
+}}
+int main() {{
+    calculate({i}, {i+1}, {i+2});
+    return 0;
+}}
+""")
+        programs.append({"name": f"cse_{i:02d}", "category": "elimination", "subcategory": "cse", "unoptimized": unopt, "optimized": opt})
+
+    # 2. Dead Code & Unreachable Code Elimination
+    for i in range(1, 10):
+        unopt = prog(f"""
+int compute() {{
+    int a = 10;
+    int b = 20;
+    int c = a + b; // Dead code
+    return 5;
+    int d = 100; // Unreachable code
+    cout << d << endl;
+}}
+int main() {{
+    cout << compute() << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+int compute() {{
+    return 5;
+}}
+int main() {{
+    cout << compute() << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"dead_code_{i:02d}", "category": "elimination", "subcategory": "dead_code", "unoptimized": unopt, "optimized": opt})
+
+    return programs
+
+# ============================================================
+# Function & Loop Optimizations
+# ============================================================
+
+def function_and_loop_optimizations():
+    programs = []
+
+    # 1. Function Inlining & Cloning
+    for i in range(1, 10):
+        unopt = prog(f"""
+int add(int a, int b) {{
+    return a + b;
+}}
+int main() {{
+    int sum = 0;
+    for (int i = 0; i < 1000; i++) {{
+        sum = add(sum, i);
     }}
-    while (!ops.empty()) applyOp();
-    return vals.top();
-}}
-int main() {{
-    cout << evaluate("{i * 3}+{i * 2}*{i + 1}") << endl;
+    cout << sum << endl;
     return 0;
 }}
-""")))
-
-    for i in range(1, 7):
-        programs.append((f"event_sim_{i:02d}", prog(f"""
-struct Event {{ int time, id; bool operator>(const Event& o) const {{ return time > o.time; }} }};
+""")
+        opt = prog(f"""
 int main() {{
-    priority_queue<Event, vector<Event>, greater<Event>> pq;
-    for (int i = 0; i < {5 + i * 2}; i++) pq.push({{(i * {i} * 7) % 100, i}});
-    int lastTime = -1;
-    while (!pq.empty()) {{
-        auto e = pq.top(); pq.pop();
-        if (e.time < lastTime) {{ cout << "ERROR: out of order!" << endl; return 1; }}
-        lastTime = e.time;
-        cout << "t=" << e.time << " id=" << e.id << endl;
+    int sum = 0;
+    for (int i = 0; i < 1000; i++) {{
+        sum = sum + i;
+    }}
+    cout << sum << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"function_inlining_{i:02d}", "category": "function", "subcategory": "inlining", "unoptimized": unopt, "optimized": opt})
+
+    # 2. Code Motion (Loop Invariant Code Motion)
+    for i in range(1, 10):
+        unopt = prog(f"""
+void compute(vector<int>& arr, int x, int y) {{
+    int n = arr.size();
+    for (int i = 0; i < n; i++) {{
+        arr[i] = arr[i] + (x * y * 100);
+    }}
+}}
+int main() {{
+    vector<int> arr(100, 0);
+    compute(arr, 5, 2);
+    return 0;
+}}
+""")
+        opt = prog(f"""
+void compute(vector<int>& arr, int x, int y) {{
+    int n = arr.size();
+    int invariant = x * y * 100;
+    for (int i = 0; i < n; i++) {{
+        arr[i] = arr[i] + invariant;
+    }}
+}}
+int main() {{
+    vector<int> arr(100, 0);
+    compute(arr, 5, 2);
+    return 0;
+}}
+""")
+        programs.append({"name": f"code_motion_{i:02d}", "category": "loop", "subcategory": "code_motion", "unoptimized": unopt, "optimized": opt})
+
+    # 3. Loop Jamming (Fusion)
+    for i in range(1, 10):
+        unopt = prog(f"""
+int main() {{
+    vector<int> a(100), b(100);
+    for (int i = 0; i < 100; i++) {{
+        a[i] = i * 2;
+    }}
+    for (int i = 0; i < 100; i++) {{
+        b[i] = i * 3;
     }}
     return 0;
 }}
-""")))
-
-    for i in range(1, 7):
-        programs.append((f"word_freq_{i:02d}", prog(f"""
+""")
+        opt = prog(f"""
 int main() {{
-    vector<string> words = {{"the","quick","brown","fox","jumps","the","lazy","dog","the","fox"}};
-    map<string, int> freq;
-    for (const auto& w : words) freq[w]++;
-    vector<pair<int,string>> sorted;
-    for (auto& [k, v] : freq) sorted.push_back({{v, k}});
-    sort(sorted.rbegin(), sorted.rend());
-    for (int i = 0; i < min({i + 2}, (int)sorted.size()); i++)
-        cout << sorted[i].second << ": " << sorted[i].first << endl;
-    return 0;
-}}
-""")))
-
-    for i in range(1, 6):
-        programs.append((f"compression_{i:02d}", prog(f"""
-string rleEncode(const string& s) {{
-    string result;
-    int i = 0;
-    while (i < (int)s.size()) {{
-        char c = s[i];
-        int count = 0;
-        while (i < (int)s.size() && s[i] == c) {{ i++; count++; }}
-        result += c;
-        result += to_string(count);
+    vector<int> a(100), b(100);
+    for (int i = 0; i < 100; i++) {{
+        a[i] = i * 2;
+        b[i] = i * 3;
     }}
-    return result;
-}}
-int main() {{
-    string s = "{'aaabbbccddddee'[:4 + i * 2]}";
-    cout << rleEncode(s) << endl;
     return 0;
 }}
-""")))
+""")
+        programs.append({"name": f"loop_jamming_{i:02d}", "category": "loop", "subcategory": "loop_jamming", "unoptimized": unopt, "optimized": opt})
 
-    return programs[:25]
+    # 4. Loop Unrolling
+    for i in range(1, 10):
+        unopt = prog(f"""
+int main() {{
+    int sum = 0;
+    for (int i = 0; i < 100; i++) {{
+        sum += i;
+    }}
+    cout << sum << endl;
+    return 0;
+}}
+""")
+        opt = prog(f"""
+int main() {{
+    int sum = 0;
+    for (int i = 0; i < 100; i += 4) {{
+        sum += i;
+        sum += i + 1;
+        sum += i + 2;
+        sum += i + 3;
+    }}
+    cout << sum << endl;
+    return 0;
+}}
+""")
+        programs.append({"name": f"loop_unrolling_{i:02d}", "category": "loop", "subcategory": "loop_unrolling", "unoptimized": unopt, "optimized": opt})
 
+    # 5. Induction Variable & Strength Reduction
+    for i in range(1, 10):
+        unopt = prog(f"""
+int main() {{
+    vector<int> arr(100);
+    for (int i = 0; i < 100; i++) {{
+        arr[i] = i * 14;
+    }}
+    return 0;
+}}
+""")
+        opt = prog(f"""
+int main() {{
+    vector<int> arr(100);
+    int val = 0;
+    for (int i = 0; i < 100; i++) {{
+        arr[i] = val;
+        val += 14;
+    }}
+    return 0;
+}}
+""")
+        programs.append({"name": f"strength_reduction_{i:02d}", "category": "loop", "subcategory": "strength_reduction", "unoptimized": unopt, "optimized": opt})
+
+    return programs
 
 # ============================================================
 # Main
 # ============================================================
 
-CATEGORIES = [
-    ("sorting",      sorting_programs),
-    ("searching",    searching_programs),
-    ("graph",        graph_programs),
-    ("dynamic_programming", dp_programs),
-    ("stl",          stl_programs),
-    ("memory_management", memory_programs),
-    ("recursion_trees", recursion_tree_programs),
-    ("competitive",  competitive_programs),
-    ("math",         math_programs),
-    ("strings",      string_programs),
-    ("matrix",       matrix_programs),
-    ("misc",         misc_programs),
-]
-
-
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
 
-    total = 0
-    for category, generator in CATEGORIES:
-        cat_dir = args.out_dir / category
-        cat_dir.mkdir(parents=True, exist_ok=True)
-        programs = generator()
-        for name, code in programs:
-            out_path = cat_dir / f"{name}.cpp"
-            out_path.write_text(code, encoding="utf-8")
-            total += 1
+    programs = []
+    programs.extend(algorithmic_programs())
+    programs.extend(compile_time_optimizations())
+    programs.extend(elimination_optimizations())
+    programs.extend(function_and_loop_optimizations())
 
-    print(f"Generated {total} C++ programs in {args.out_dir}")
-    return 0
-
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    
+    with args.out.open("w", encoding="utf-8") as f:
+        for p in programs:
+            f.write(json.dumps(p) + "\n")
+            
+    print(f"Generated {len(programs)} paired optimization samples in {args.out}")
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

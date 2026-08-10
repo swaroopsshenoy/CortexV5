@@ -1,38 +1,48 @@
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import Editor from "@monaco-editor/react";
+import { buildCompletionItems } from "./cppCompletionProvider";
+import { registerCppFormattingProviders, formatCppSource } from "./cppFormattingProvider";
 
-const COMPLETION_ITEMS = [
-  {
-    label: "std::vector",
-    insertText: "std::vector<${1:int}> ${2:name};",
-    documentation: "STL dynamic array",
-    kind: "Class"
-  },
-  {
-    label: "fori",
-    insertText: "for (int ${1:i} = 0; ${1:i} < ${2:n}; ++${1:i}) {\n\t$0\n}",
-    documentation: "Index-based loop",
-    kind: "Snippet"
-  },
-  {
-    label: "cout",
-    insertText: "std::cout << ${1:value} << std::endl;",
-    documentation: "Standard output",
-    kind: "Function"
-  }
-];
-
-export default function CppEditor({
+const CppEditor = forwardRef(function CppEditor({
   tab,
   diagnostics,
   focusDiagnostic,
   onCodeChange,
   onSave,
   onCompile
-}) {
+}, ref) {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const completionDisposableRef = useRef(null);
+  const formattingDisposablesRef = useRef([]);
+
+  // Expose formatDocument to parent via ref
+  useImperativeHandle(ref, () => ({
+    formatDocument() {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const action = editor.getAction("editor.action.formatDocument");
+      if (action) {
+        action.run();
+      } else {
+        // Fallback: format directly via our formatter
+        const model = editor.getModel();
+        if (!model) return;
+        const formatted = formatCppSource(model.getValue());
+        const trimmed = formatted.endsWith("\n") ? formatted.slice(0, -1) : formatted;
+        if (trimmed !== model.getValue()) {
+          model.pushEditOperations(
+            [],
+            [{
+              range: model.getFullModelRange(),
+              text: trimmed
+            }],
+            () => null
+          );
+        }
+      }
+    }
+  }), []);
 
   const markerData = useMemo(
     () =>
@@ -80,6 +90,10 @@ export default function CppEditor({
       if (completionDisposableRef.current) {
         completionDisposableRef.current.dispose();
       }
+      for (const d of formattingDisposablesRef.current) {
+        d.dispose();
+      }
+      formattingDisposablesRef.current = [];
     };
   }, []);
 
@@ -91,26 +105,62 @@ export default function CppEditor({
       completionDisposableRef.current = monacoInstance.languages.registerCompletionItemProvider(
         "cpp",
         {
-          provideCompletionItems: () => ({
-            suggestions: COMPLETION_ITEMS.map((item) => ({
-              label: item.label,
-              insertText: item.insertText,
-              insertTextRules:
-                monacoInstance.languages.CompletionItemInsertTextRule
-                  .InsertAsSnippet,
-              kind:
-                monacoInstance.languages.CompletionItemKind[item.kind] ??
-                monacoInstance.languages.CompletionItemKind.Text,
-              documentation: item.documentation
-            }))
-          })
+          triggerCharacters: [".", ">", ":"],
+          provideCompletionItems: (model, position) =>
+            buildCompletionItems(model, position, monacoInstance)
         }
       );
     }
 
+    // Register formatting providers (Shift+Alt+F and Ctrl+K Ctrl+F)
+    if (formattingDisposablesRef.current.length === 0) {
+      formattingDisposablesRef.current = registerCppFormattingProviders(monacoInstance);
+    }
+
+    // Shift+Alt+F — format document
+    editorInstance.addCommand(
+      monacoInstance.KeyMod.Shift | monacoInstance.KeyMod.Alt | monacoInstance.KeyCode.KeyF,
+      () => {
+        const action = editorInstance.getAction("editor.action.formatDocument");
+        if (action) {
+          action.run();
+        } else {
+          // Fallback: format directly
+          const model = editorInstance.getModel();
+          if (model) {
+            const formatted = formatCppSource(model.getValue());
+            const trimmed = formatted.endsWith("\n") ? formatted.slice(0, -1) : formatted;
+            if (trimmed !== model.getValue()) {
+              model.pushEditOperations(
+                [],
+                [{ range: model.getFullModelRange(), text: trimmed }],
+                () => null
+              );
+            }
+          }
+        }
+      }
+    );
+
+    // Ctrl+S — format then save
     editorInstance.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
-      () => onSave()
+      () => {
+        const model = editorInstance.getModel();
+        if (model) {
+          const formatted = formatCppSource(model.getValue());
+          const trimmed = formatted.endsWith("\n") ? formatted.slice(0, -1) : formatted;
+          if (trimmed !== model.getValue()) {
+            model.pushEditOperations(
+              [],
+              [{ range: model.getFullModelRange(), text: trimmed }],
+              () => null
+            );
+            onCodeChange(trimmed);
+          }
+        }
+        onSave();
+      }
     );
     editorInstance.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
@@ -133,8 +183,12 @@ export default function CppEditor({
         automaticLayout: true,
         fontSize: 14,
         tabSize: 2,
-        scrollBeyondLastLine: false
+        scrollBeyondLastLine: false,
+        formatOnPaste: true,
+        formatOnType: false
       }}
     />
   );
-}
+});
+
+export default CppEditor;

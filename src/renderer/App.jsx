@@ -5,6 +5,7 @@ import BenchmarkModal from "./components/BenchmarkModal";
 import Resizer from "./components/Resizer";
 import InspectorPane from "./components/InspectorPane";
 import TerminalPane from "./components/Terminal/TerminalPane";
+import DiffViewer from "./components/Editor/DiffViewer";
 import { useEditorStore } from "./components/Editor/useEditorStore";
 import { ipcClient } from "./ipc/client";
 
@@ -56,17 +57,6 @@ function toExplanationMessage(explanations) {
   return ["Error explanations:", ...lines].join("\n");
 }
 
-function toSimulationMessage(result) {
-  const preview = (result.executionTrace ?? [])
-    .slice(0, 8)
-    .map((step) => `#${step.stepIndex} ${step.eventType} L${step.currentLine ?? "-"} ${step.detail}`);
-  return [
-    `Simulation ${result.status}.`,
-    `Steps: ${result.summary.totalSteps}`,
-    `Warnings: ${result.summary.warningCount}`,
-    ...preview
-  ].join("\n");
-}
 
 function toBenchmarkMessage(result) {
   if (!result) {
@@ -251,16 +241,20 @@ export default function App() {
   const [activeProject, setActiveProject] = useState(null);
   const [compileExplanations, setCompileExplanations] = useState([]);
   const [focusedDiagnostic, setFocusedDiagnostic] = useState(null);
-  const [simulationResult, setSimulationResult] = useState(null);
+
   const [benchmarkResult, setBenchmarkResult] = useState(null);
   const [profileHistory, setProfileHistory] = useState([]);
   const [lastAnalyzeResult, setLastAnalyzeResult] = useState(null);
   const [lastCompileResult, setLastCompileResult] = useState(null);
   const [batchBenchmarkResults, setBatchBenchmarkResults] = useState([]);
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
+  const [isDiffViewerOpen, setIsDiffViewerOpen] = useState(false);
+  const [optimizedCodeData, setOptimizedCodeData] = useState("");
+  const [enableMlOptimize, setEnableMlOptimize] = useState(true);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
+  const cppEditorRef = useRef(null);
 
   const handleLeftResize = useCallback((deltaX) => {
     if (!contentRef.current) return;
@@ -330,44 +324,7 @@ export default function App() {
     [activeTabId, tabs]
   );
 
-  const callStackSnapshot = useMemo(() => {
-    const trace = simulationResult?.executionTrace ?? [];
-    for (let index = trace.length - 1; index >= 0; index -= 1) {
-      const step = trace[index];
-      if (Array.isArray(step.callStack) && step.callStack.length > 0) {
-        return {
-          frames: step.callStack,
-          stepIndex: step.stepIndex,
-          line: step.currentLine
-        };
-      }
-    }
-    const lastStep = trace.at(-1) ?? null;
-    return {
-      frames: [],
-      stepIndex: lastStep?.stepIndex ?? null,
-      line: lastStep?.currentLine ?? null
-    };
-  }, [simulationResult]);
 
-  const memorySnapshot = useMemo(() => {
-    const trace = simulationResult?.executionTrace ?? [];
-    for (let index = trace.length - 1; index >= 0; index -= 1) {
-      const step = trace[index];
-      if (step?.memorySnapshot) {
-        return {
-          snapshot: step.memorySnapshot,
-          stepIndex: step.stepIndex,
-          line: step.currentLine
-        };
-      }
-    }
-    return {
-      snapshot: null,
-      stepIndex: null,
-      line: null
-    };
-  }, [simulationResult]);
 
   const handleSelectWorkspaceEntry = useCallback(
     async (entry) => {
@@ -392,14 +349,15 @@ export default function App() {
     [openWorkspaceTab]
   );
 
-  async function handleCompile() {
+  async function handleCompile(silent = false, currentCode = null) {
     if (!activeTab) {
       return;
     }
 
-    setStatus("Compiling...");
+    if (silent !== true) setStatus("Compiling...");
     try {
       let compilePayload;
+      const codeToCompile = currentCode ?? activeTab.code;
 
       if (activeProject?.type === "cmake") {
         compilePayload = {
@@ -407,7 +365,7 @@ export default function App() {
           projectRootPath: `workspace\\${activeProject.rootPath}`.replace(/\\+/g, "\\"),
           buildPath: `workspace\\${activeProject.buildPath}`.replace(/\\+/g, "\\")
         };
-        terminalRef.current?.writeSystem(
+        if (silent !== true) terminalRef.current?.writeSystem(
           `[cmake] Building project at ${activeProject.rootPath}...`
         );
       } else if (activeProject?.type === "multi-file" && activeProject.sourceFiles?.length > 1) {
@@ -417,7 +375,7 @@ export default function App() {
           sourceFiles: activeProject.sourceFiles.map((f) => `workspace\\${f}`.replace(/\\+/g, "\\")),
           outputPath: `workspace\\${activeProject.buildPath}\\app.exe`.replace(/\\+/g, "\\")
         };
-        terminalRef.current?.writeSystem(
+        if (silent !== true) terminalRef.current?.writeSystem(
           `[multi-file] Compiling ${activeProject.sourceFiles.length} files...`
         );
       } else {
@@ -425,41 +383,52 @@ export default function App() {
           compiler: "clang++",
           sourcePath: toWorkspaceSourcePath(activeTab.path),
           outputPath: `${toWorkspaceSourcePath(activeProject?.buildPath ?? "build")}\\app.exe`,
-          code: activeTab.code
+          code: codeToCompile
         };
       }
 
       const result = await ipcClient.compile(compilePayload);
-      terminalRef.current?.writeSystem(
-        [
-          "Compile completed.",
-          result.stdout ? `stdout:\n${result.stdout}` : "",
-          result.stderr ? `stderr:\n${result.stderr}` : "",
-          toExplanationMessage(result.explanations)
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        result.stderr ? "error" : "success"
-      );
-      setCompileExplanations(result.explanations ?? []);
-      setLastCompileResult(result);
+      if (silent !== true) {
+        terminalRef.current?.writeSystem(
+          [
+            "Compile completed.",
+            result.stdout ? `stdout:\n${result.stdout}` : "",
+            result.stderr ? `stderr:\n${result.stderr}` : "",
+            toExplanationMessage(result.explanations)
+          ]
+            .filter(Boolean)
+            .join("\n"),
+          result.stderr ? "error" : "success"
+        );
+      }
+      
+      if (result.explanations) {
+        setCompileExplanations(result.explanations);
+      }
+      if (silent !== true) setLastCompileResult(result);
+      
       setDiagnostics(
         (result.diagnostics ?? []).map((item) => ({
           ...item,
           severity: mapSeverity(item.type)
         }))
       );
-      setStatus(
-        result.code === 0
-          ? "Compile succeeded."
-          : `Compile failed.\n${result.stderr || result.stdout}`
-      );
-      refreshWorkspace().catch(() => {});
+      
+      if (silent !== true) {
+        setStatus(
+          result.code === 0
+            ? "Compile succeeded."
+            : `Compile failed.\n${result.stderr || result.stdout}`
+        );
+        refreshWorkspace().catch(() => {});
+      }
     } catch (error) {
-      setCompileExplanations([]);
+      if (silent !== true) setCompileExplanations([]);
       setDiagnostics([]);
-      setStatus(`Compile error.\n${error.message}`);
-      terminalRef.current?.writeSystem(`Compile error: ${error.message}`, "error");
+      if (silent !== true) {
+        setStatus(`Compile error.\n${error.message}`);
+        terminalRef.current?.writeSystem(`Compile error: ${error.message}`, "error");
+      }
     }
   }
 
@@ -533,32 +502,7 @@ export default function App() {
     }
   }
 
-  async function handleSimulate() {
-    if (!activeTab) {
-      return;
-    }
-    setStatus("Simulating...");
-    setSimulationResult(null);
-    try {
-      const result = await ipcClient.simulate({
-        language: "cpp",
-        sourcePath: toWorkspaceSourcePath(activeTab.path),
-        code: activeTab.code,
-        maxLoopIterations: 20
-      });
-      setSimulationResult(result);
-      terminalRef.current?.writeSystem(toSimulationMessage(result), "info");
-      setStatus(
-        result.status === "ok"
-          ? `Simulation completed.\nSteps: ${result.summary.totalSteps}`
-          : `Simulation partial.\nWarnings: ${result.summary.warningCount}`
-      );
-    } catch (error) {
-      setSimulationResult(null);
-      setStatus(`Simulation error.\n${error.message}`);
-      terminalRef.current?.writeSystem(`Simulation error: ${error.message}`, "error");
-    }
-  }
+
 
   async function handleBenchmark() {
     if (!activeTab) {
@@ -657,6 +601,56 @@ export default function App() {
     } catch (error) {
       setStatus(`Complexity analysis error.\n${error.message}`);
       terminalRef.current?.writeSystem(`Analysis error: ${error.message}`, "error");
+    }
+  }
+
+  async function handleOptimize() {
+    if (!activeTab) {
+      return;
+    }
+    
+    setStatus("Optimizing code...");
+    terminalRef.current?.writeSystem("Starting optimization...", "info");
+    try {
+      const result = await ipcClient.optimize({
+        sourcePath: toWorkspaceSourcePath(activeTab.path),
+        code: activeTab.code,
+        skipMl: !enableMlOptimize
+      });
+      
+      if (result.status === "ok" && result.optimizedCode && result.optimizedCode !== activeTab.code) {
+        setOptimizedCodeData(result.optimizedCode);
+        setIsDiffViewerOpen(true);
+        setStatus("Optimization completed. Review changes.");
+      } else if (result.status === "ok") {
+        setStatus("Optimization completed. Suggestions updated.");
+      } else {
+        setStatus(`Optimization failed: ${result.error || "Unknown error"}`);
+        terminalRef.current?.writeSystem(`Optimization failed: ${result.error}`, "error");
+      }
+      
+      if (result.suggestions && Array.isArray(result.suggestions.suggestions) && result.suggestions.suggestions.length > 0) {
+        const rulesMessage = ["Rule-based suggestions:"];
+        result.suggestions.suggestions.forEach(s => {
+          rulesMessage.push(`- ${s.title} (${Math.round(s.confidence * 100)}%)`);
+          rulesMessage.push(`  ${s.rationale}`);
+        });
+        terminalRef.current?.writeSystem(rulesMessage.join('\n'), "info");
+      }
+
+      if (result.algorithmRecommendations && result.algorithmRecommendations.length > 0) {
+        const algoMessage = ["Algorithm Recommendations:"];
+        result.algorithmRecommendations.forEach(r => {
+          algoMessage.push(`- ${r.name} (${r.complexity})`);
+          algoMessage.push(`  Use when: ${r.use_when}`);
+          algoMessage.push(`  Notes: ${r.notes}`);
+          algoMessage.push(`  Template:\n${r.template}`);
+        });
+        terminalRef.current?.writeSystem(algoMessage.join('\n'), "info");
+      }
+    } catch (error) {
+      setStatus(`Optimization error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Optimization error: ${error.message}`, "error");
     }
   }
 
@@ -770,6 +764,8 @@ export default function App() {
           });
           refreshWorkspace().catch(() => {});
           setStatus(`Auto-saved: ${activeTab.path}`);
+          
+          await handleCompile(true, code);
         } catch (error) {
           setStatus(`Auto-save error.\n${error.message}`);
         }
@@ -875,12 +871,27 @@ export default function App() {
           <button type="button" onClick={handleSave} data-tooltip="Save active file">
             Save
           </button>
+          <button type="button" onClick={() => cppEditorRef.current?.formatDocument()} data-tooltip="Format code (Shift+Alt+F)">
+            Format
+          </button>
           <button type="button" onClick={handleBenchmark} data-tooltip="Run benchmark test">
             Benchmark
           </button>
           <button type="button" onClick={handleAnalyzeComplexity} data-tooltip="Analyze code complexity">
             Analyze Complexity
           </button>
+          <button type="button" onClick={handleOptimize} data-tooltip="Optimize code using ML model">
+            Optimize
+          </button>
+          <label className="toggle-label" data-tooltip="Enable ML rewriting/optimization">
+            <input
+              type="checkbox"
+              checked={enableMlOptimize}
+              onChange={(e) => setEnableMlOptimize(e.target.checked)}
+              style={{ marginRight: "6px", cursor: "pointer" }}
+            />
+            ML Rewrite
+          </label>
           <button type="button" onClick={handleStoreBaseline} data-tooltip="Store benchmark as baseline">
             Store Baseline
           </button>
@@ -907,84 +918,6 @@ export default function App() {
             onDelete={handleDelete}
             onRefresh={() => refreshWorkspace().catch(() => {})}
           />
-          <section className="callstack-pane">
-            <div className="callstack-header">
-              <strong>Call Stack</strong>
-              <span className="callstack-meta">
-                {callStackSnapshot.stepIndex
-                  ? `Step #${callStackSnapshot.stepIndex}`
-                  : "No simulation yet"}
-              </span>
-            </div>
-            {callStackSnapshot.frames.length === 0 ? (
-              <div className="callstack-empty">Run Simulate to populate the call stack.</div>
-            ) : (
-              <ol className="callstack-list">
-                {[...callStackSnapshot.frames].reverse().map((frame, index) => {
-                  const paramText = formatStackVariables(frame.params);
-                  const localText = formatStackVariables(frame.locals);
-                  return (
-                    <li
-                      key={`${frame.frameId}-${frame.functionName}`}
-                      className={`callstack-frame ${index === 0 ? "callstack-frame--top" : ""}`}
-                    >
-                      <div className="callstack-frame-title">
-                        <span>{frame.functionName}</span>
-                        <span className="callstack-line">L{frame.line ?? "-"}</span>
-                      </div>
-                      {paramText ? (
-                        <div className="callstack-frame-meta">Params: {paramText}</div>
-                      ) : null}
-                      {localText ? (
-                        <div className="callstack-frame-meta">Locals: {localText}</div>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </section>
-          <section className="memory-pane">
-            <div className="memory-header">
-              <strong>Memory</strong>
-              <span className="memory-meta">
-                {memorySnapshot.stepIndex ? `Step #${memorySnapshot.stepIndex}` : "No simulation yet"}
-              </span>
-            </div>
-            {!memorySnapshot.snapshot ? (
-              <div className="memory-empty">Run Simulate to populate memory.</div>
-            ) : (
-              <div className="memory-grid">
-                <div className="memory-block">
-                  <div className="memory-title">Stack</div>
-                  <div className="memory-row">
-                    Frames: {memorySnapshot.snapshot.stack.frames}
-                  </div>
-                  <div className="memory-row">
-                    Params: {memorySnapshot.snapshot.stack.params}
-                  </div>
-                  <div className="memory-row">
-                    Locals: {memorySnapshot.snapshot.stack.locals}
-                  </div>
-                </div>
-                <div className="memory-block">
-                  <div className="memory-title">Heap</div>
-                  <div className="memory-row">
-                    Allocs: {memorySnapshot.snapshot.heap.allocations} (unknown{" "}
-                    {memorySnapshot.snapshot.heap.unknownAllocs})
-                  </div>
-                  <div className="memory-row">
-                    Frees: {memorySnapshot.snapshot.heap.frees} (unknown{" "}
-                    {memorySnapshot.snapshot.heap.unknownFrees})
-                  </div>
-                  <div className="memory-row">Live: {memorySnapshot.snapshot.heap.live}</div>
-                  <div className="memory-row">
-                    Bytes live: {memorySnapshot.snapshot.heap.bytesLive}
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
         </aside>
 
         <Resizer onDrag={handleLeftResize} />
@@ -1013,6 +946,7 @@ export default function App() {
 
               <div className="editor-host">
                 <CppEditor
+                  ref={cppEditorRef}
                   tab={activeTab}
                   diagnostics={diagnostics.filter((item) =>
                     isDiagnosticForTab(item.file, activeTab.path, activeTab.label)
@@ -1036,12 +970,39 @@ export default function App() {
 
         <Resizer onDrag={handleRightResize} direction="horizontal" />
 
-        <InspectorPane
-          quickFixCards={selectTopQuickFixCards(compileExplanations)}
-          onQuickFixSelect={handleQuickFixSelect}
-          profileHistory={profileHistory}
-          profileHistoryWindow={PROFILE_HISTORY_WINDOW}
-        />
+        <div className="right-sidebar" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
+          {isDiffViewerOpen && (
+            <>
+              <section className="diff-viewer-pane" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', borderLeft: '1px solid #334155' }}>
+                <DiffViewer 
+                  originalCode={activeTab?.code || ""}
+                  modifiedCode={optimizedCodeData}
+                  language={activeTab?.language || "cpp"}
+                  onAccept={(newCode) => {
+                    handleCodeChange(newCode);
+                    setIsDiffViewerOpen(false);
+                    setStatus("Optimized code applied.");
+                  }}
+                  onReject={() => {
+                    setIsDiffViewerOpen(false);
+                    setStatus("Optimized code rejected.");
+                  }}
+                  onClose={() => {
+                    setIsDiffViewerOpen(false);
+                  }}
+                />
+              </section>
+              <Resizer onDrag={() => {}} direction="vertical" />
+            </>
+          )}
+
+          <InspectorPane
+            quickFixCards={selectTopQuickFixCards(compileExplanations)}
+            onQuickFixSelect={handleQuickFixSelect}
+            profileHistory={profileHistory}
+            profileHistoryWindow={PROFILE_HISTORY_WINDOW}
+          />
+        </div>
       </div>
 
       <Resizer onDrag={handleBottomResize} direction="vertical" />
