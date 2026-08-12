@@ -250,7 +250,6 @@ export default function App() {
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
   const [isDiffViewerOpen, setIsDiffViewerOpen] = useState(false);
   const [optimizedCodeData, setOptimizedCodeData] = useState("");
-  const [enableMlOptimize, setEnableMlOptimize] = useState(true);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
@@ -614,8 +613,7 @@ export default function App() {
     try {
       const result = await ipcClient.optimize({
         sourcePath: toWorkspaceSourcePath(activeTab.path),
-        code: activeTab.code,
-        skipMl: !enableMlOptimize
+        code: activeTab.code
       });
       
       if (result.status === "ok" && result.optimizedCode && result.optimizedCode !== activeTab.code) {
@@ -877,21 +875,9 @@ export default function App() {
           <button type="button" onClick={handleBenchmark} data-tooltip="Run benchmark test">
             Benchmark
           </button>
-          <button type="button" onClick={handleAnalyzeComplexity} data-tooltip="Analyze code complexity">
-            Analyze Complexity
-          </button>
           <button type="button" onClick={handleOptimize} data-tooltip="Optimize code using ML model">
             Optimize
           </button>
-          <label className="toggle-label" data-tooltip="Enable ML rewriting/optimization">
-            <input
-              type="checkbox"
-              checked={enableMlOptimize}
-              onChange={(e) => setEnableMlOptimize(e.target.checked)}
-              style={{ marginRight: "6px", cursor: "pointer" }}
-            />
-            ML Rewrite
-          </label>
           <button type="button" onClick={handleStoreBaseline} data-tooltip="Store benchmark as baseline">
             Store Baseline
           </button>
