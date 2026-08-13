@@ -63,7 +63,7 @@ test("generateReport includes dark-mode CSS variables", async (t) => {
   assert.ok(html.includes("--surface:"), "should have --surface CSS variable");
 });
 
-test("generateReport includes performance risk section", async (t) => {
+test("generateReport omits performance risk prediction section", async (t) => {
   const tmpDir = await makeTempDir();
   t.after(() => fs.rm(tmpDir, { recursive: true, force: true }));
 
@@ -95,9 +95,7 @@ test("generateReport includes performance risk section", async (t) => {
   });
 
   const html = await fs.readFile(result.outputPath, "utf8");
-  assert.ok(html.includes("Performance Risk"), "should have risk section");
-  assert.ok(html.includes("high"), "should show risk class");
-  assert.ok(html.includes("Loop Count"), "should list top cause");
+  assert.equal(html.includes("Performance Risk Prediction"), false, "should not contain performance risk section");
 });
 
 test("generateReport handles undefined analyzeResult gracefully", async (t) => {
@@ -117,7 +115,6 @@ test("generateReport handles undefined analyzeResult gracefully", async (t) => {
 
   assert.equal(result.ok, true);
   const html = await fs.readFile(result.outputPath, "utf8");
-  assert.ok(html.includes("No performance risk data"), "should show fallback text");
   assert.ok(html.includes("No benchmark data"), "should show benchmark fallback");
 });
 
@@ -139,7 +136,7 @@ test("generateReport auto-generates output path from sourcePath", async (t) => {
   assert.ok(result.outputPath.includes("hello_report.html"), "output path should derive from sourcePath");
 });
 
-test("generateReport renders code smells section when provided", async (t) => {
+test("generateReport omits code smells, optimization suggestions, and semantic issues", async (t) => {
   const tmpDir = await makeTempDir();
   t.after(() => fs.rm(tmpDir, { recursive: true, force: true }));
 
@@ -153,6 +150,12 @@ test("generateReport renders code smells section when provided", async (t) => {
     stdout: JSON.stringify({
       codeSmells: [
         { kind: "long-function", severity: "HIGH", message: "Function exceeds 100 lines" }
+      ],
+      semanticIssues: [
+        { kind: "dangling-pointer", severity: "HIGH", message: "Dangling pointer" }
+      ],
+      optimizationSuggestions: [
+        { title: "Use vector reserve", rationale: "Avoid reallocation" }
       ]
     }),
     stderr: ""
@@ -165,11 +168,12 @@ test("generateReport renders code smells section when provided", async (t) => {
   });
 
   const html = await fs.readFile(result.outputPath, "utf8");
-  assert.ok(html.includes("long-function"), "should list code smell kind");
-  assert.ok(html.includes("Function exceeds 100 lines"), "should show smell message");
+  assert.equal(html.includes("Code Smells"), false, "should not contain Code Smells section");
+  assert.equal(html.includes("Semantic Issues"), false, "should not contain Semantic Issues section");
+  assert.equal(html.includes("Optimization Suggestions"), false, "should not contain Optimization Suggestions section");
 });
 
-test("generateReport renders complexity analysis with object factors successfully", async (t) => {
+test("generateReport omits complexity analysis section", async (t) => {
   const tmpDir = await makeTempDir();
   t.after(() => fs.rm(tmpDir, { recursive: true, force: true }));
 
@@ -182,25 +186,7 @@ test("generateReport renders complexity analysis with object factors successfull
     code: 0,
     stdout: JSON.stringify({
       complexityEstimate: {
-        time: {
-          bigO: "O(n^2)",
-          confidence: "high",
-          factors: {
-            loops: 2,
-            nestingDepth: 2,
-            recursion: 0
-          },
-          notes: ["Loop nesting drives time."]
-        },
-        space: {
-          bigO: "O(1)",
-          confidence: "medium",
-          factors: {
-            recursion: 0,
-            allocations: 0
-          },
-          notes: []
-        }
+        time: { bigO: "O(n^2)" }
       }
     }),
     stderr: ""
@@ -213,8 +199,5 @@ test("generateReport renders complexity analysis with object factors successfull
   });
 
   const html = await fs.readFile(result.outputPath, "utf8");
-  assert.ok(html.includes("Complexity Analysis"), "should have complexity section");
-  assert.ok(html.includes("O(n^2)"), "should show time bigO");
-  assert.ok(html.includes("loops: 2, nestingDepth: 2, recursion: 0"), "should show formatted time factors");
-  assert.ok(html.includes("recursion: 0, allocations: 0"), "should show formatted space factors");
+  assert.equal(html.includes("Complexity Analysis"), false, "should not contain complexity analysis section");
 });

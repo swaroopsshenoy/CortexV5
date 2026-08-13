@@ -15,13 +15,7 @@ function badge(text, color) {
   return `<span class="badge" style="background:${color}">${esc(text)}</span>`;
 }
 
-function riskColor(riskClass) {
-  if (!riskClass) return "#555";
-  const lower = riskClass.toLowerCase();
-  if (lower === "high") return "#e53e3e";
-  if (lower === "medium") return "#dd6b20";
-  return "#38a169";
-}
+
 
 function confidenceColor(band) {
   if (band === "high") return "#38a169";
@@ -48,98 +42,7 @@ function buildMetaSection(meta) {
   return `<table class="meta-table">${rows}</table>`;
 }
 
-function buildPerformanceRiskSection(risk) {
-  if (!risk || risk.status !== "ok") {
-    const msg = risk?.status === "unavailable"
-      ? `Unavailable: ${risk.reason ?? "model not found"}`
-      : "No performance risk data.";
-    return `<p class="muted">${esc(msg)}</p>`;
-  }
-  const prob = typeof risk.probability === "number"
-    ? `${Math.round(risk.probability * 100)}%`
-    : "N/A";
-  const causeRows = (risk.topCauses ?? []).slice(0, 8).map(c =>
-    `<tr>
-      <td>${esc(c.label ?? c.feature)}</td>
-      <td>${esc(String(c.value))}</td>
-      <td>${c.contribution.toFixed(4)}</td>
-    </tr>`
-  ).join("");
 
-  return `
-    <div class="risk-summary">
-      <div class="risk-card">
-        <div class="risk-label">Risk Class</div>
-        <div class="risk-value" style="color:${riskColor(risk.riskClass)}">${esc(risk.riskClass ?? "N/A")}</div>
-      </div>
-      <div class="risk-card">
-        <div class="risk-label">Probability</div>
-        <div class="risk-value">${esc(prob)}</div>
-      </div>
-      <div class="risk-card">
-        <div class="risk-label">Confidence</div>
-        <div class="risk-value" style="color:${confidenceColor(risk.confidenceBand)}">${esc(risk.confidenceBand ?? "N/A")}</div>
-      </div>
-    </div>
-    ${causeRows ? `
-    <h3>Top Causes</h3>
-    <table class="data-table">
-      <thead><tr><th>Feature</th><th>Value</th><th>Contribution</th></tr></thead>
-      <tbody>${causeRows}</tbody>
-    </table>` : ""}
-  `;
-}
-
-function formatComplexityFactors(factors) {
-  if (!factors) {
-    return "";
-  }
-  if (Array.isArray(factors)) {
-    return factors.join(", ");
-  }
-  if (typeof factors === "object") {
-    return Object.entries(factors)
-      .map(([key, val]) => `${key}: ${val}`)
-      .join(", ");
-  }
-  return String(factors);
-}
-
-function buildComplexitySection(stdoutOrPayload) {
-  let payload = stdoutOrPayload;
-  if (typeof payload === "string") {
-    try { payload = JSON.parse(payload); } catch { payload = null; }
-  }
-  const complexity =
-    payload?.complexityEstimate ??
-    payload?.complexity ??
-    (payload?.time || payload?.space ? payload : {});
-  const time = complexity.time ?? {};
-  const space = complexity.space ?? {};
-  if (!time.bigO && !space.bigO) {
-    return `<p class="muted">No complexity data available.</p>`;
-  }
-  const formattedTimeFactors = formatComplexityFactors(time.factors);
-  const formattedSpaceFactors = formatComplexityFactors(space.factors);
-  return `
-    <div class="complexity-grid">
-      <div class="complexity-card">
-        <div class="complexity-label">Time Complexity</div>
-        <div class="complexity-value">${esc(time.bigO ?? "N/A")}</div>
-        <div class="complexity-meta">Confidence: ${esc(time.confidence ?? "unknown")}</div>
-        ${formattedTimeFactors ? `<div class="complexity-meta">Factors: ${esc(formattedTimeFactors)}</div>` : ""}
-        ${Array.isArray(time.notes) && time.notes.length > 0 ? `<div class="complexity-meta">Notes: ${esc(time.notes.join("; "))}</div>` : ""}
-      </div>
-      <div class="complexity-card">
-        <div class="complexity-label">Space Complexity</div>
-        <div class="complexity-value">${esc(space.bigO ?? "N/A")}</div>
-        <div class="complexity-meta">Confidence: ${esc(space.confidence ?? "unknown")}</div>
-        ${formattedSpaceFactors ? `<div class="complexity-meta">Factors: ${esc(formattedSpaceFactors)}</div>` : ""}
-        ${Array.isArray(space.notes) && space.notes.length > 0 ? `<div class="complexity-meta">Notes: ${esc(space.notes.join("; "))}</div>` : ""}
-      </div>
-    </div>
-  `;
-}
 
 function buildBenchmarkSection(benchmark) {
   if (!benchmark || benchmark.status !== "ok") {
@@ -224,63 +127,6 @@ function buildNlpSection(nlpExplanations) {
   `).join("");
 }
 
-function buildOptimizationsSection(optimizationSuggestions) {
-  const suggestions = Array.isArray(optimizationSuggestions) ? optimizationSuggestions : [];
-  if (suggestions.length === 0) {
-    return `<p class="muted">No optimization suggestions. Run Analyze Complexity.</p>`;
-  }
-  return suggestions.slice(0, 10).map(s => `
-    <div class="opt-card">
-      <div class="opt-header">
-        ${badge(s.confidenceBand ?? "low", confidenceColor(s.confidenceBand))}
-        <strong>${esc(s.title ?? s.id)}</strong>
-      </div>
-      <p>${esc(s.rationale ?? "")}</p>
-      ${Array.isArray(s.actions) && s.actions.length > 0 ? `
-        <ul class="fix-list">${s.actions.slice(0, 4).map(a => `<li>${esc(a)}</li>`).join("")}</ul>
-      ` : ""}
-    </div>
-  `).join("");
-}
-
-function buildCodeSmellsSection(codeSmells) {
-  if (!Array.isArray(codeSmells) || codeSmells.length === 0) {
-    return `<p class="muted">No code smells detected.</p>`;
-  }
-  const rows = codeSmells.slice(0, 15).map(smell =>
-    `<tr>
-      <td>${esc(smell.kind ?? smell.type ?? "smell")}</td>
-      <td>${badge(smell.severity ?? "low", severityColor(smell.severity))}</td>
-      <td>${esc(smell.message ?? smell.description ?? "")}</td>
-    </tr>`
-  ).join("");
-  return `
-    <table class="data-table">
-      <thead><tr><th>Kind</th><th>Severity</th><th>Description</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function buildSemanticSection(semanticIssues) {
-  if (!Array.isArray(semanticIssues) || semanticIssues.length === 0) {
-    return `<p class="muted">No semantic issues detected.</p>`;
-  }
-  const rows = semanticIssues.slice(0, 15).map(issue =>
-    `<tr>
-      <td>${esc(issue.kind ?? "issue")}</td>
-      <td>${badge(issue.severity ?? "low", severityColor(issue.severity))}</td>
-      <td>${esc(issue.message ?? "")}</td>
-      <td>${esc(issue.remediation ?? "")}</td>
-    </tr>`
-  ).join("");
-  return `
-    <table class="data-table">
-      <thead><tr><th>Kind</th><th>Severity</th><th>Message</th><th>Remediation</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
 
 function buildHtml({ meta, analyzeResult, benchmarkResult, compileResult }) {
   const generatedAt = new Date().toISOString();
@@ -290,11 +136,8 @@ function buildHtml({ meta, analyzeResult, benchmarkResult, compileResult }) {
     try { stdoutPayload = JSON.parse(analyzeResult.stdout); } catch { /* ignore */ }
   }
 
-  const features = stdoutPayload?.features ?? {};
-  const complexityEstimate = stdoutPayload?.complexityEstimate ?? null;
-  const semanticIssues = stdoutPayload?.semanticIssues ?? [];
-  const codeSmells = stdoutPayload?.codeSmells ?? [];
-  const optimizationSuggestions = stdoutPayload?.optimizationSuggestions ?? [];
+
+
   const performanceRisk = analyzeResult?.performanceRisk ?? null;
   const nlpExplanations = analyzeResult?.nlpExplanations ?? [];
   const diagnostics = compileResult?.diagnostics ?? [];
@@ -389,15 +232,7 @@ function buildHtml({ meta, analyzeResult, benchmarkResult, compileResult }) {
     })}
   </section>
 
-  <section class="report-section">
-    ${sectionHeader("Performance Risk Prediction", "🎯")}
-    ${buildPerformanceRiskSection(performanceRisk)}
-  </section>
 
-  <section class="report-section">
-    ${sectionHeader("Complexity Analysis", "📊")}
-    ${buildComplexitySection(complexityEstimate ?? analyzeResult?.stdout)}
-  </section>
 
   <section class="report-section">
     ${sectionHeader("Benchmark Results", "⚡")}
@@ -414,20 +249,7 @@ function buildHtml({ meta, analyzeResult, benchmarkResult, compileResult }) {
     ${buildExplanationsSection(explanations)}
   </section>
 
-  <section class="report-section">
-    ${sectionHeader("Optimization Suggestions", "🚀")}
-    ${buildOptimizationsSection(optimizationSuggestions)}
-  </section>
 
-  <section class="report-section">
-    ${sectionHeader("Code Smells", "🌡️")}
-    ${buildCodeSmellsSection(codeSmells)}
-  </section>
-
-  <section class="report-section">
-    ${sectionHeader("Semantic Issues", "🔍")}
-    ${buildSemanticSection(semanticIssues)}
-  </section>
 
   <section class="report-section">
     ${sectionHeader("NLP Explanations", "🧠")}
