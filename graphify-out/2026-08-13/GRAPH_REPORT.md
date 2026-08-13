@@ -1,16 +1,16 @@
-# Graph Report - CortexV5  (2026-08-13)
+# Graph Report - CortexV5  (2026-07-21)
 
 ## Corpus Check
-- 97 files · ~58,599 words
+- 95 files · ~55,567 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 998 nodes · 1388 edges · 72 communities (65 shown, 7 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.52)
+- 990 nodes · 1395 edges · 70 communities (63 shown, 7 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.52)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `06a7e241`
+- Built from commit: `21028acc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -77,9 +77,7 @@
 - Isolated Component 59
 - Isolated Component 60
 - Isolated Component 61
-- Isolated Component 64
 - Isolated Component 65
-- algorithmRecommendationService.js
 - channels.js
 - createClangService
 
@@ -88,12 +86,12 @@
 2. `WindowApi` - 25 edges
 3. `validateString()` - 21 edges
 4. `Cortex++V5 Master Roadmap (Primary Reference)` - 16 edges
-5. `buildExplanationRecord()` - 11 edges
-6. `scripts` - 9 edges
-7. `build` - 9 edges
-8. `extractAstFeatures()` - 8 edges
-9. `createNlpExplanationService()` - 8 edges
-10. `esc()` - 8 edges
+5. `esc()` - 13 edges
+6. `buildHtml()` - 13 edges
+7. `buildExplanationRecord()` - 11 edges
+8. `scripts` - 9 edges
+9. `build` - 9 edges
+10. `extractAstFeatures()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `createAstAnalysisService()` --calls--> `createOptimizationSuggestionService()`  [EXTRACTED]
@@ -110,7 +108,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (72 total, 7 thin omitted)
+## Communities (70 total, 7 thin omitted)
 
 ### Community 0 - "Isolated Component 0"
 Cohesion: 0.03
@@ -134,7 +132,7 @@ Nodes (37): assertNonEmptyString(), assertStringArray(), buildExplanationRecord(
 
 ### Community 5 - "Isolated Component 5"
 Cohesion: 0.06
-Nodes (40): applyMlEnhancement(), assertNonEmptyString(), buildAnalyzeContext(), buildTopCauseSummary(), createNlpExplanationService(), fs, getByPath(), matchesWhenClause() (+32 more)
+Nodes (41): applyMlEnhancement(), assertNonEmptyString(), buildAnalyzeContext(), buildTopCauseSummary(), createNlpExplanationService(), fs, getByPath(), matchesWhenClause() (+33 more)
 
 ### Community 6 - "Isolated Component 6"
 Cohesion: 0.08
@@ -153,12 +151,12 @@ Cohesion: 0.08
 Nodes (26): assertNonEmptyString(), buildBraceMap(), createExecutionSimulatorService(), createExecutionTrace(), detectFunctionHeader(), detectUnsupportedConstruct(), evaluateCondition(), extractFirstParenContent() (+18 more)
 
 ### Community 10 - "Isolated Component 10"
-Cohesion: 0.16
-Nodes (19): badge(), buildBenchmarkSection(), buildDiagnosticsSection(), buildExplanationsSection(), buildHtml(), buildMetaSection(), buildNlpSection(), confidenceColor() (+11 more)
+Cohesion: 0.15
+Nodes (26): badge(), buildBenchmarkSection(), buildCodeSmellsSection(), buildComplexitySection(), buildDiagnosticsSection(), buildExplanationsSection(), buildHtml(), buildMetaSection() (+18 more)
 
 ### Community 11 - "Isolated Component 11"
 Cohesion: 0.07
-Nodes (29): { app, BrowserWindow, ipcMain, dialog, shell }, { createAlgorithmRecommendationService }, { createAstAnalysisService }, { createAutoSaveService }, { createBenchmarkRunnerService }, { createClangService }, { createComparativeProfilingService }, { createExecutionSimulatorService } (+21 more)
+Nodes (25): { app, BrowserWindow, ipcMain, dialog, shell }, { createAstAnalysisService }, { createAutoSaveService }, { createBenchmarkRunnerService }, { createClangService }, { createComparativeProfilingService }, { createExecutionSimulatorService }, { createNlpExplanationService } (+17 more)
 
 ### Community 12 - "Isolated Component 12"
 Cohesion: 0.08
@@ -217,8 +215,8 @@ Cohesion: 0.27
 Nodes (9): PPLX_API_KEY, npx, python, @microsoft/mcp-server-playwright, cortex-cmake, cortex-perplexity-search, cortex-python-ml, cortex-shell (+1 more)
 
 ### Community 27 - "Isolated Component 27"
-Cohesion: 0.26
-Nodes (12): ALLOWED_COMMANDS, analyzeWithPerformanceRisk(), getAstAnalysisService(), getBenchmarkRunnerService(), getClangService(), getNlpExplanationService(), getPerformanceRiskService(), spawnExecutable() (+4 more)
+Cohesion: 0.29
+Nodes (11): ALLOWED_COMMANDS, analyzeWithPerformanceRisk(), getAstAnalysisService(), getBenchmarkRunnerService(), getClangService(), getNlpExplanationService(), getPerformanceRiskService(), spawnExecutable() (+3 more)
 
 ### Community 28 - "Isolated Component 28"
 Cohesion: 0.39
@@ -233,8 +231,8 @@ Cohesion: 0.25
 Nodes (6): createComparativeProfilingService(), path, assert, { createComparativeProfilingService }, test, getComparativeProfilingService()
 
 ### Community 31 - "Isolated Component 31"
-Cohesion: 0.28
-Nodes (9): detectWorkspaceProject(), IGNORED_WORKSPACE_DIRS, isRegularFile(), isSourceFileName(), pickEntryFile(), readWorkspaceEntries(), readWorkspaceSourceFiles(), SOURCE_FILE_EXTENSIONS (+1 more)
+Cohesion: 0.20
+Nodes (12): createTerminalSession(), detectWorkspaceProject(), getReportService(), isRegularFile(), isSourceFileName(), pickEntryFile(), readWorkspaceSourceFiles(), sendTerminalEvent() (+4 more)
 
 ### Community 32 - "Isolated Component 32"
 Cohesion: 0.29
@@ -336,14 +334,6 @@ Nodes (3): Focus, Report Generation & PDF Export Skill, Use when
 Cohesion: 0.67
 Nodes (4): appendTerminalHistory(), getTerminalHistoryFilePath(), readTerminalHistory(), writeTerminalHistory()
 
-### Community 64 - "Isolated Component 64"
-Cohesion: 0.36
-Nodes (7): format_code(), main(), Remove markdown code fences or extract C++ code block from model output., Check if output is valid C++ by compiling with -fsyntax-only., Format C++ code using clang-format., strip_markdown_fences(), validate_cpp_output()
-
-### Community 68 - "algorithmRecommendationService.js"
-Cohesion: 0.33
-Nodes (4): createAlgorithmRecommendationService(), fs, path, getAlgorithmRecommendationService()
-
 ### Community 69 - "channels.js"
 Cohesion: 0.40
 Nodes (4): IPC_CHANNEL_SET, IPC_CHANNELS, IPC_EVENT_SET, IPC_EVENTS
@@ -353,7 +343,7 @@ Cohesion: 0.50
 Nodes (4): createClangService(), createErrorExplanationService(), createRewriteAdapter(), normalizeRewriteOutput()
 
 ## Knowledge Gaps
-- **410 isolated node(s):** `npx`, `@microsoft/mcp-server-playwright`, `PPLX_API_KEY`, `npx`, `@microsoft/mcp-server-playwright` (+405 more)
+- **407 isolated node(s):** `npx`, `@microsoft/mcp-server-playwright`, `PPLX_API_KEY`, `npx`, `@microsoft/mcp-server-playwright` (+402 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -362,12 +352,12 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `createClangService()` connect `createClangService` to `clangService.test.js`, `Isolated Component 11`, `Isolated Component 20`, `pipeline.test.js`, `Isolated Component 27`, `stability.test.js`?**
   _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `createReportService()` connect `Isolated Component 11` to `Isolated Component 10`, `stability.test.js`, `pipeline.test.js`?**
+- **Why does `createReportService()` connect `Isolated Component 31` to `Isolated Component 10`, `Isolated Component 11`, `stability.test.js`, `pipeline.test.js`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **Why does `createAutoSaveService()` connect `Isolated Component 19` to `Isolated Component 11`, `stability.test.js`, `pipeline.test.js`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **What connects `Run CMake configure step.`, `Run CMake build step.`, `Run CTest in the given build directory.` to the rest of the system?**
-  _421 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _415 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Isolated Component 0` be split into smaller, more focused modules?**
   _Cohesion score 0.025974025974025976 - nodes in this community are weakly interconnected._
 - **Should `Isolated Component 1` be split into smaller, more focused modules?**

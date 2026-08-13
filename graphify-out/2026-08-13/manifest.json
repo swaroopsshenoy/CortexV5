@@ -85,13 +85,13 @@
     "semantic_hash": ""
   },
   "scripts/ml/generate_cpp_programs.py": {
-    "mtime": 1784653400.791019,
-    "ast_hash": "e5293217b6badef340507605957849ba",
+    "mtime": 1784189567.4344532,
+    "ast_hash": "8111942c68ebe43770e1cb29d4e97a09",
     "semantic_hash": ""
   },
   "scripts/ml/train_optimization_model.py": {
-    "mtime": 1784662320.3158748,
-    "ast_hash": "452cc5f1ffd2d9a5d7027daeb49e8924",
+    "mtime": 1784193742.8334723,
+    "ast_hash": "58997f27549ceb044a9af0bde1744bbc",
     "semantic_hash": ""
   },
   "scripts/ml/train_risk_model.py": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "scripts/run_optimization_model.py": {
-    "mtime": 1785066343.319591,
-    "ast_hash": "d1f931aae8d044a18957e9213e399318",
+    "mtime": 1784209762.9868624,
+    "ast_hash": "52c474d8e66a7f99aa9f71f8637b529e",
     "semantic_hash": ""
   },
   "src/electron/main/astAnalysisService.js": {
@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "src/electron/main/main.js": {
-    "mtime": 1786596142.4400382,
-    "ast_hash": "d1d788b8f75c386e9b5c61847ba8fe85",
+    "mtime": 1784207950.2885406,
+    "ast_hash": "e1101e4a8d16eb0ce371d4b6c97778b7",
     "semantic_hash": ""
   },
   "src/electron/main/nlpExplanationService.js": {
@@ -265,13 +265,13 @@
     "semantic_hash": ""
   },
   "src/electron/main/reportService.js": {
-    "mtime": 1786595499.4857793,
-    "ast_hash": "a4405cc9194b36615792cf4bb82c7be9",
+    "mtime": 1781857895.2671933,
+    "ast_hash": "0c01efd992e0b8d68b76bb89de6a6182",
     "semantic_hash": ""
   },
   "src/electron/main/reportService.test.js": {
-    "mtime": 1786595509.137262,
-    "ast_hash": "446b1b202695404081e74c4946df5c47",
+    "mtime": 1781857859.7771719,
+    "ast_hash": "03c3b1fd8b082e6ad6000dd895114d3b",
     "semantic_hash": ""
   },
   "src/electron/preload/preload.js": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/renderer/App.jsx": {
-    "mtime": 1786594037.101184,
-    "ast_hash": "ef155eb2baddbdb08dafde373bd0b08e",
+    "mtime": 1784634278.0252483,
+    "ast_hash": "1871838319baa629133e5b1d9a14ea63",
     "semantic_hash": ""
   },
   "src/renderer/components/BenchmarkModal.jsx": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/InspectorPane.jsx": {
-    "mtime": 1786594055.6760783,
-    "ast_hash": "e3880fb327554908e722b4d68074a3d1",
+    "mtime": 1784186574.294219,
+    "ast_hash": "4597ed797c43d8fce13af2b48b999baf",
     "semantic_hash": ""
   },
   "src/renderer/components/Resizer.jsx": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/shared/ipc/schemas.js": {
-    "mtime": 1784636994.6296253,
-    "ast_hash": "7a9641eda0464aa79a15d5d7293848d4",
+    "mtime": 1784207893.54187,
+    "ast_hash": "c7520de3307fa2ce410f534e3377035d",
     "semantic_hash": ""
   },
   "vite.config.mjs": {
@@ -487,16 +487,6 @@
   "src/renderer/components/Editor/cppFormattingProvider.js": {
     "mtime": 1784634728.7039607,
     "ast_hash": "32b48d3e37eb9ebb5f40eaf91789ba21",
-    "semantic_hash": ""
-  },
-  "scripts/download_model.py": {
-    "mtime": 1785065348.6996703,
-    "ast_hash": "3f7db65fff59e0eb7499140ef95466ff",
-    "semantic_hash": ""
-  },
-  "src/electron/main/algorithmRecommendationService.js": {
-    "mtime": 1784636927.4989038,
-    "ast_hash": "5c1c7d7aba1216054d0dfaabb918825b",
     "semantic_hash": ""
   }
 }
