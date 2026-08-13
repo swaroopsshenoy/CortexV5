@@ -250,6 +250,8 @@ export default function App() {
   const [isBenchmarkModalOpen, setIsBenchmarkModalOpen] = useState(false);
   const [isDiffViewerOpen, setIsDiffViewerOpen] = useState(false);
   const [optimizedCodeData, setOptimizedCodeData] = useState("");
+  const [simulationResult, setSimulationResult] = useState(null);
+  const [simulationStepIndex, setSimulationStepIndex] = useState(0);
   const terminalRef = useRef(null);
   const contentRef = useRef(null);
   const autoSaveTimerRef = useRef(null);
@@ -652,6 +654,33 @@ export default function App() {
     }
   }
 
+  async function handleSimulate() {
+    if (!activeTab) {
+      setStatus("No active tab to simulate.");
+      return;
+    }
+
+    setStatus("Simulating execution...");
+    terminalRef.current?.writeSystem("Starting simulation...", "info");
+    try {
+      const result = await ipcClient.simulate({
+        sourcePath: toWorkspaceSourcePath(activeTab.path),
+        code: activeTab.code,
+        language: "cpp"
+      });
+      setSimulationResult(result);
+      setSimulationStepIndex(0);
+      const totalSteps = result.executionTrace?.length || 0;
+      setStatus(`Simulation complete (${totalSteps} trace steps).`);
+      terminalRef.current?.writeSystem(
+        `Simulation completed successfully with ${totalSteps} trace steps.`,
+        "success"
+      );
+    } catch (error) {
+      setStatus(`Simulation error.\n${error.message}`);
+      terminalRef.current?.writeSystem(`Simulation error: ${error.message}`, "error");
+    }
+  }
 
   async function handleStoreBaseline() {
     if (!benchmarkResult) {
@@ -875,6 +904,9 @@ export default function App() {
           <button type="button" onClick={handleBenchmark} data-tooltip="Run benchmark test">
             Benchmark
           </button>
+          <button type="button" onClick={handleSimulate} data-tooltip="Simulate C++ execution trace">
+            Simulate
+          </button>
           <button type="button" onClick={handleOptimize} data-tooltip="Optimize code using ML model">
             Optimize
           </button>
@@ -987,6 +1019,9 @@ export default function App() {
             onQuickFixSelect={handleQuickFixSelect}
             profileHistory={profileHistory}
             profileHistoryWindow={PROFILE_HISTORY_WINDOW}
+            simulationResult={simulationResult}
+            simulationStepIndex={simulationStepIndex}
+            onSimulationStepChange={setSimulationStepIndex}
           />
         </div>
       </div>

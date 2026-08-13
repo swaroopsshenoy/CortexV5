@@ -16,7 +16,10 @@ export default function InspectorPane(props) {
     quickFixCards = [],
     onQuickFixSelect,
     profileHistory = [],
-    profileHistoryWindow = 10
+    profileHistoryWindow = 10,
+    simulationResult = null,
+    simulationStepIndex = 0,
+    onSimulationStepChange
   } = props;
 
   const [expandedCardIds, setExpandedCardIds] = useState({});
@@ -155,6 +158,94 @@ export default function InspectorPane(props) {
               );
             })}
           </ul>
+        </section>
+      ) : null}
+
+      {simulationResult ? (
+        <section className="simulation-panel" style={{ padding: "12px", borderTop: "1px solid #334155" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <strong style={{ fontSize: "13px", color: "#e2e8f0" }}>Simulation Call Stack</strong>
+            <span style={{ fontSize: "11px", color: "#94a3b8" }}>{simulationResult.status}</span>
+          </div>
+
+          {Array.isArray(simulationResult.executionTrace) && simulationResult.executionTrace.length > 0 ? (() => {
+            const trace = simulationResult.executionTrace;
+            const currentIdx = Math.min(Math.max(0, simulationStepIndex), trace.length - 1);
+            const currentStep = trace[currentIdx];
+            const callStack = currentStep?.callStack || [];
+
+            return (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <button
+                    type="button"
+                    disabled={currentIdx <= 0}
+                    onClick={() => onSimulationStepChange?.(currentIdx - 1)}
+                    style={{ padding: "2px 8px", fontSize: "12px", cursor: currentIdx <= 0 ? "not-allowed" : "pointer" }}
+                  >
+                    Prev
+                  </button>
+                  <span style={{ fontSize: "12px", color: "#cbd5e1" }}>
+                    Step {currentIdx + 1} / {trace.length}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentIdx >= trace.length - 1}
+                    onClick={() => onSimulationStepChange?.(currentIdx + 1)}
+                    style={{ padding: "2px 8px", fontSize: "12px", cursor: currentIdx >= trace.length - 1 ? "not-allowed" : "pointer" }}
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {currentStep && (
+                  <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "8px", background: "#0f172a", padding: "6px", borderRadius: "4px" }}>
+                    <div>Event: <strong style={{ color: "#38bdf8" }}>{currentStep.eventType}</strong></div>
+                    {currentStep.line != null && <div>Line: {currentStep.line}</div>}
+                    <div>Detail: {currentStep.detail}</div>
+                  </div>
+                )}
+
+                <div className="call-stack-list" style={{ background: "#0f172a", borderRadius: "4px", padding: "8px" }}>
+                  <div style={{ fontWeight: "600", fontSize: "12px", color: "#cbd5e1", marginBottom: "6px" }}>
+                    Call Stack ({callStack.length} frame{callStack.length === 1 ? "" : "s"})
+                  </div>
+                  {callStack.length > 0 ? (
+                    callStack.map((frame) => (
+                      <div
+                        key={frame.frameId}
+                        style={{
+                          padding: "6px",
+                          marginBottom: "4px",
+                          background: "#1e293b",
+                          borderRadius: "4px",
+                          fontSize: "11px"
+                        }}
+                      >
+                        <div style={{ color: "#f1f5f9", fontWeight: "600" }}>
+                          {frame.functionName || "anonymous"}() {frame.line != null ? `(line ${frame.line})` : ""}
+                        </div>
+                        {frame.params && frame.params.length > 0 && (
+                          <div style={{ color: "#94a3b8", marginTop: "2px" }}>
+                            Params: {frame.params.map((p) => `${p.name}=${p.value}`).join(", ")}
+                          </div>
+                        )}
+                        {frame.locals && frame.locals.length > 0 && (
+                          <div style={{ color: "#94a3b8", marginTop: "2px" }}>
+                            Locals: {frame.locals.map((l) => `${l.name}=${l.value}`).join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>Empty call stack</div>
+                  )}
+                </div>
+              </>
+            );
+          })() : (
+            <div style={{ fontSize: "12px", color: "#64748b" }}>No execution steps recorded.</div>
+          )}
         </section>
       ) : null}
     </aside>
