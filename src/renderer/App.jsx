@@ -623,7 +623,8 @@ export default function App() {
         setIsDiffViewerOpen(true);
         setStatus("Optimization completed. Review changes.");
       } else if (result.status === "ok") {
-        setStatus("Optimization completed. Suggestions updated.");
+        setStatus("Optimization completed: Code is already optimal or model output matched original code.");
+        terminalRef.current?.writeSystem("Optimization completed: Code is already optimal or model output matched original code.", "info");
       } else {
         setStatus(`Optimization failed: ${result.error || "Unknown error"}`);
         terminalRef.current?.writeSystem(`Optimization failed: ${result.error}`, "error");
